@@ -11,7 +11,7 @@
     "require": {},
     "autoload": {
         "psr-4": {
-            "PHPNES\\": "src/phpnes/"
+            "PHPNES\\": "src/PHPNES/"
 		}
     }
 }

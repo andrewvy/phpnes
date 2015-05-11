@@ -13,3 +13,5 @@ require "vendor/autoload.php";
 use PHPNES\NES;
 
 $nes = new NES();
+
+$nes->loadRom("");
