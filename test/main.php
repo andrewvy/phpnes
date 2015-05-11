@@ -8,21 +8,22 @@
  * @license MIT
  */
 
-require "vendor/autoload.php";
+require "../vendor/autoload.php";
 
 use PHPNES\NES;
 
 $nes = new NES();
 
 /*
-This rom is an iNES executable of Concentration Room 0.01 in base 64:
+The rom being used for testing is an iNES executable
+of Concentration Room 0.01:
+
 http://pineight.com/croom/
 Copyright © 2010 Damian Yerrick <croom@pineight.com>
 
-Check croom.rom.license for details.
+Check roms/croom/croom.b64.license for details.
 */
 
-$romData64 = file_get_contents("croom.rom");
-$romData = base64_decode($romData64);
+$romData = file_get_contents("../roms/croom/croom.nes");
 
 $nes->loadRom($romData);

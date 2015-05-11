@@ -52,5 +52,7 @@ class NES {
 		$this->PAPU->reset();
 	}
 
-	public function loadRom($dir)
+	public function loadRom($data) {
+		
+	}
 }
