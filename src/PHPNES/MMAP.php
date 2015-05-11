@@ -11,4 +11,12 @@
 namespace PHPNES;
 
 class MMAP {
+	public $NES;
+
+	public function __construct($NES) {
+		$this->NES = $NES;
+	}
+
+	public function reset() {
+	}
 }

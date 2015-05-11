@@ -14,6 +14,7 @@ use PHPNES\CPU;
 use PHPNES\PPU;
 use PHPNES\PAPU;
 use PHPNES\MMAP;
+use PHPNES\ROM;
 
 class NES {
 
@@ -34,7 +35,9 @@ class NES {
 	public $PAPU;
 	public $MMAP;
 
-	public $isRunning
+	public $isRunning = false;
+	public $rom;
+	public $romData;
 
 	public function __construct() {
 		$this->CPU = new CPU($this);
@@ -52,7 +55,36 @@ class NES {
 		$this->PAPU->reset();
 	}
 
+	public function start() {
+		if ($this->rom != null && $this->rom->isValid) {
+			// Start running rom!
+
+			$this->isRunning = true;
+
+		} else {
+			// Alert that the rom is either not loaded or is invalid.
+
+		}
+	}
+
+	public function stop() {
+		$this->isRunning = false;
+	}
+
 	public function loadRom($data) {
-		
+		if ($this->isRunning) {
+			$this->stop();
+		}
+
+		// Load rom!
+		$this->rom = new ROM($this);
+		$this->rom->load($data);
+
+		if ($this->rom->isValid) {
+		}
+	}
+
+	public function reloadRom() {
+
 	}
 }

@@ -10,13 +10,12 @@
 
 namespace PHPNES;
 
-class PPU {
-	public $NES;
+class ROM {
+	public $isValid = false;
 
 	public function __construct($NES) {
-		$this->NES = $NES;
 	}
 
-	public function reset() {
+	public function load($data) {
 	}
 }
