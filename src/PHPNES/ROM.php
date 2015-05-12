@@ -10,6 +10,8 @@
 
 namespace PHPNES;
 
+use PHPNES\PPU\Tile;
+
 class ROM {
 	const VERTICAL_MIRRORING = 0;
 	const HORIZONTAL_MIRRORING = 1;
@@ -45,7 +47,7 @@ class ROM {
 	}
 
 	public function prefillMapperName() {
-		$this->mapperName[0] = "Direct Access"
+		$this->mapperName[0] = "Direct Access";
 		$this->mapperName[1] = "Nintendo MMC1";
 		$this->mapperName[2] = "UNROM";
 		$this->mapperName[3] = "CNROM";
@@ -103,7 +105,7 @@ class ROM {
 		$this->batteryRam = ($this->header[6] & 2) !== 0;
 		$this->trainer = ($this->header[6] & 4) !== 0;
 		$this->fourScreen = ($this->header[6] & 8) !== 0;
-		$this->mapperType = ($this->header[6] >> 4 | ($this->header[7] & 0xF0);
+		$this->mapperType = ($this->header[6] >> 4) | ($this->header[7] & 0xF0);
 
 		$foundError = false;
 
@@ -144,7 +146,7 @@ class ROM {
 		$this->vrom = array_fill(0, $this->vromCount, 0);
 
 		for ($i = 0; $i < $this->vromCount; $i ++) {
-			$this->vrom[$] = array_fill(0, 4096, 0x00);
+			$this->vrom[$i] = array_fill(0, 4096, 0x00);
 			for ($j = 0; $j < 4096; $j++) {
 				if (isset($data[$offset+$j])) {
 					break;
@@ -163,7 +165,7 @@ class ROM {
 		for ($i = 0; $i < $this->vromCount; $i++) {
 			$this->vromTile[$i] = array_fill(0, 256, 0x00);
 			for ($j = 0; $j < 256; $j++) {
-				$this->vromTile[$i][$j] = $this->NES->PPU->Tile();
+				$this->vromTile[$i][$j] = new Tile();
 			}
 		}
 
