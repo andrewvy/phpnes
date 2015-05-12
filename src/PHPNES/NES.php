@@ -80,11 +80,29 @@ class NES {
 		$this->rom = new ROM($this);
 		$this->rom->load($data);
 
+		// Check if the rom is valid and initialize MMAP & PPU.
 		if ($this->rom->isValid) {
+			$this->reset();
+			$this->mmap = $this->rom->createMapper();
+
+			if ($this->mmap == null) {
+				return;
+			}
+
+			$this->mmap->loadROM();
+			$this->ppu->setMirroring($this->rom->getMirroringType());
+			$this->romData = $data;
+		} else {
+			// An invalid rom was loaded.
 		}
+
+		return $this->rom->isValid;
 	}
 
 	public function reloadRom() {
-
+		if ($this->romData != null) {
+			$this->loadRom($this->romData);
+		}
 	}
+
 }

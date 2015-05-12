@@ -18,5 +18,11 @@ class MMAP {
 	}
 
 	public function reset() {
+
 	}
+
+	public function loadROM() {
+
+	}
+
 }

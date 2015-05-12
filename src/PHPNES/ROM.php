@@ -11,11 +11,22 @@
 namespace PHPNES;
 
 class ROM {
+	public $NES;
+
 	public $isValid = false;
 
 	public function __construct($NES) {
+		$this->NES = $NES;
 	}
 
 	public function load($data) {
+
+	}
+
+	public function createMapper() {
+
+	}
+
+	public function getMirroringType() {
 	}
 }

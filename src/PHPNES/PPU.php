@@ -19,4 +19,7 @@ class PPU {
 
 	public function reset() {
 	}
+
+	public function setMirroring($type) {
+	}
 }
