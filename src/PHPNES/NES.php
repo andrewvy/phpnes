@@ -34,6 +34,7 @@ class NES {
 	public $PPU;
 	public $PAPU;
 	public $MMAP;
+	public $MapperProvider;
 
 	public $isRunning = false;
 	public $rom;
@@ -44,6 +45,8 @@ class NES {
 		$this->CPU = new CPU($this);
 		$this->PPU = new PPU($this);
 		$this->PAPU = new PAPU($this);
+
+		$this->MapperProvider = new MapperProvider($this);
 	}
 
 	public function reset() {

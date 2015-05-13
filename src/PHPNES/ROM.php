@@ -198,8 +198,16 @@ class ROM {
 		$this->isValid = true;
 	}
 
-	public function createMapper() {
+	public function mapperSupported() {
+		// Check if there's an mapper implemented in PHPNES
+	}
 
+	public function createMapper() {
+		if ($this->mapperSupported()) {
+			// Return new instantion of mapper
+		} else {
+			// ROM not supported, mapper not found
+		}
 	}
 
 	public function getMirroringType() {
