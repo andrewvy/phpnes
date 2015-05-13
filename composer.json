@@ -1,7 +1,7 @@
 {
     "name": "andrewvy/phpnes",
     "description": "A PHP NES Emulator",
-    "license": "MIT",
+    "license": "GPL",
     "authors": [
         {
             "name": "Andrew Vy",

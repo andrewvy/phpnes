@@ -5,7 +5,7 @@
  * Based off of Ben Firshman's JSNES and Jamie Sanders' vNES.
  *
  * @copyright Andrew Vy 2015
- * @license MIT
+ * @license GPL
  */
 
 namespace PHPNES\CPU;

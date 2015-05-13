@@ -2,7 +2,7 @@
 
 A NES Emulator implemented in PHP, heavily based off of [JSNES](https://github.com/bfirsh/jsnes) and Jamie Sanders' vNES.
 
-The goal of this project is to be a hilarious implementation of a server-side NES emulation with a JS front-end for graphics/input.
+The goal of this project is to be a hilarious NES emulator using [PHP-SDL](https://github.com/phpsdl/extension) for graphical output and user input.
 
 ### Current Status
 
