@@ -62,7 +62,7 @@ class CPU {
 			$this->mem[$i + 0x00F] = 0xBF;
 		}
 
-		for ($i = 0x2001; $i < $this->mem; $i++) {
+		for ($i = 0x2001; $i < 0x10000; $i++) {
 			$this->mem[$i] = 0x00;
 		}
 
@@ -210,13 +210,13 @@ class CPU {
 	}
 
 	public function setStatus($status) {
-		$this->F_CARRY = (st) & 1;
-		$this->F_ZERO = (st >> 1) & 1;
-		$this->F_INTERRUPT = (st >> 2) & 1;
-		$this->F_DECIMAL = (st >> 3) & 1;
-		$this->F_BRK = (st >> 4) & 1;
-		$this->F_NOTUSED = (st >> 5) & 1;
-		$this->F_OVERFLOW = (st >> 6) & 1;
-		$this->F_SIGN = (st >> 7) & 1;
+		$this->F_CARRY = ($status) & 1;
+		$this->F_ZERO = ($status >> 1) & 1;
+		$this->F_INTERRUPT = ($status >> 2) & 1;
+		$this->F_DECIMAL = ($status >> 3) & 1;
+		$this->F_BRK = ($status >> 4) & 1;
+		$this->F_NOTUSED = ($status >> 5) & 1;
+		$this->F_OVERFLOW = ($status >> 6) & 1;
+		$this->F_SIGN = ($status >> 7) & 1;
 	}
 }

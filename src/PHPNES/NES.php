@@ -43,6 +43,10 @@ class NES {
 	public $debugMode = false;
 
 	public function __construct() {
+		// We definitely need more than the default memory limit.
+
+		ini_set('memory_limit', '1G');
+
 		$this->CPU = new CPU($this);
 		$this->PPU = new PPU($this);
 		$this->PAPU = new PAPU($this);
@@ -87,6 +91,7 @@ class NES {
 
 		// Check if the rom is valid and initialize MMAP & PPU.
 		if ($this->rom->isValid) {
+			$this->reset();
 			$this->MMAP = $this->rom->createMapper();
 
 			if ($this->MMAP == null) {
