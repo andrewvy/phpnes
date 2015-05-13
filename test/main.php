@@ -13,6 +13,7 @@ require "vendor/autoload.php";
 use PHPNES\NES;
 
 $nes = new NES();
+$nes->debugMode = true;
 
 /*
 The rom being used for testing is an iNES executable

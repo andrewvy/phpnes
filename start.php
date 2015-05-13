@@ -14,4 +14,16 @@ use PHPNES\NES;
 
 $nes = new NES();
 
-$nes->loadRom("");
+/*
+The rom being used for testing is an iNES executable
+of Concentration Room 0.01:
+
+http://pineight.com/croom/
+Copyright © 2010 Damian Yerrick <croom@pineight.com>
+
+Check roms/croom/croom.b64.license for details.
+*/
+
+$romData = file_get_contents("roms/croom/croom.nes");
+
+$nes->loadRom($romData);

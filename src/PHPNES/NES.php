@@ -38,6 +38,7 @@ class NES {
 	public $isRunning = false;
 	public $rom;
 	public $romData;
+	public $debugMode = false;
 
 	public function __construct() {
 		$this->CPU = new CPU($this);
