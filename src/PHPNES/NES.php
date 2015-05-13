@@ -15,6 +15,7 @@ use PHPNES\PPU;
 use PHPNES\PAPU;
 use PHPNES\MMAP;
 use PHPNES\ROM;
+use PHPNES\MMAP\MapperProvider;
 
 class NES {
 
@@ -86,15 +87,14 @@ class NES {
 
 		// Check if the rom is valid and initialize MMAP & PPU.
 		if ($this->rom->isValid) {
-			$this->reset();
-			$this->mmap = $this->rom->createMapper();
+			$this->MMAP = $this->rom->createMapper();
 
-			if ($this->mmap == null) {
+			if ($this->MMAP == null) {
 				return;
 			}
 
-			$this->mmap->loadROM();
-			$this->ppu->setMirroring($this->rom->getMirroringType());
+			$this->MMAP->loadROM();
+			$this->PPU->setMirroring($this->rom->getMirroringType());
 			$this->romData = $data;
 		} else {
 			// An invalid rom was loaded.

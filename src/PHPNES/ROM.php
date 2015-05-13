@@ -12,6 +12,13 @@ namespace PHPNES;
 
 use PHPNES\PPU\Tile;
 
+// Use all mappers
+
+use PHPNES\MMAP\Mappers\DirectAccess;
+use PHPNES\MMAP\Mappers\NintendoMMC1;
+use PHPNES\MMAP\Mappers\NintendoMMC3;
+use PHPNES\MMAP\Mappers\Unrom;
+
 class ROM {
 	const VERTICAL_MIRRORING = 0;
 	const HORIZONTAL_MIRRORING = 1;
@@ -198,15 +205,13 @@ class ROM {
 		$this->isValid = true;
 	}
 
-	public function mapperSupported() {
-		// Check if there's an mapper implemented in PHPNES
-	}
-
 	public function createMapper() {
-		if ($this->mapperSupported()) {
-			// Return new instantion of mapper
+		$mapper = $this->NES->MapperProvider->getMapperByType($this->mapperType);
+
+		if ($mapper) {
+			return new $mapper($this->NES);
 		} else {
-			// ROM not supported, mapper not found
+			// Mapper doesn't exist or isn't supported
 		}
 	}
 
