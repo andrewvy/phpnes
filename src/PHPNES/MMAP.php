@@ -25,4 +25,10 @@ class MMAP {
 
 	}
 
+	public function load($addr) {
+	}
+
+	public function write($addr, $val) {
+	}
+
 }
