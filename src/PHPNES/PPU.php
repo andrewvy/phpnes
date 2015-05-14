@@ -36,6 +36,8 @@ class PPU {
 	public $validTileData;
 	public $nmiCounter;
 	public $scanlineAlreadyRendered;
+
+	// Flags
 	public $f_nmiOnVblank;
 	public $f_spriteSize;
 	public $f_bgPatternTable;
@@ -48,11 +50,15 @@ class PPU {
 	public $f_spClipping;
 	public $f_bgClipping;
 	public $f_dispType;
+
+	// Register Counts
 	public $cntFV;
 	public $cntV;
 	public $cntH;
 	public $cntVT;
 	public $cntHT;
+
+	// Registers
 	public $regFV;
 	public $regV;
 	public $regH;
@@ -60,6 +66,7 @@ class PPU {
 	public $regHT;
 	public $regFH;
 	public $regS;
+
 	public $curNt;
 	public $attrib;
 	public $buffer;
@@ -67,7 +74,6 @@ class PPU {
 	public $bgbuffer;
 	public $pixrendered;
 
-	public $validTileData;
 	public $scantile;
 	public $scanline;
 	public $lastRenderedScanline;
@@ -86,7 +92,6 @@ class PPU {
 	public $imgPalette;
 	public $ptTile;
 	public $ntable1;
-	public $currentMirroring;
 	public $nameTable;
 	public $vramMirrorTable;
 	public $palTable;
