@@ -726,7 +726,7 @@ class PPU {
 				$this->writeMem($address, $value);
 			}
 		} else {
-			if ($address < count($this->vramMirrorTable) {
+			if ($address < count($this->vramMirrorTable)) {
 				$this->writeMem($this->vramMirrorTable[$address], $value);
 			} else {
 				// Invalid VRAM Addr
@@ -759,7 +759,7 @@ class PPU {
 			}
 
 			for ($destIndex = $si; $destIndex < $ei; $destIndex++) {
-				if ($this->pixRendered[$destIndex] > 0xFF;) {
+				if ($this->pixrendered[$destIndex] > 0xFF) {
 					$this->buffer[$destIndex] = $this->bfbuffer[$destIndex];
 				}
 			}
@@ -782,7 +782,7 @@ class PPU {
 		$this->cntH = $this->regH;
 		$this->curNt = $this->ntable1[$this->cntV + $this->cntV + $this->cntH];
 
-		if ($scan < 240 && 240 ($scan - $this->cntFV) >= 0) {
+		if ($scan < 240 && ($scan - $this->cntFV) >= 0) {
 			$tscanoffset = $this->cntFV << 3;
 			$targetBuffer = $bgbuffer ? $this->bfbuffer : $this->buffer;
 
@@ -856,7 +856,7 @@ class PPU {
 				$this->cntVT = 0;
 				$this->cntV++;
 				$this->cntV %= 2;
-				$this->curNt = $this->ntable1[($this->cntV << 1) $this->cntH];
+				$this->curNt = $this->ntable1[($this->cntV << 1) + $this->cntH];
 			} else if ($this->cntVT == 32) {
 				$this->cntVT = 0;
 			}
@@ -880,7 +880,7 @@ class PPU {
 							$this->srcy1 = $startscan - $this->sprY[$i] - 1;
 						}
 
-						if ($this->sprY[$i] + 8 > $startscan $scancount) {
+						if ($this->sprY[$i] + 8 > $startscan + $scancount) {
 							$this->srcy2 = $startscan + $scancount - $this->sprY[$i] + 1;
 						}
 
@@ -913,7 +913,7 @@ class PPU {
 							$srcy2 = $startscan + $scancount - $this->sprY[$i];
 						}
 
-						$this->ptTile[$top + ($this->vertFlip[$i] ? 1 : 0]->render(
+						$this->ptTile[$top + ($this->vertFlip[$i] ? 1 : 0)]->render(
 							$this->buffer,
 							0,
 							$srcy1,
@@ -1126,7 +1126,7 @@ class PPU {
 				);
 			} else {
 				$this->sprPalette[$i] = $this->palTable->getEntry(
-					$this->vramMem[0x3f10 + $1] & 32
+					$this->vramMem[0x3f10 + $i] & 32
 				);
 			}
 		}
@@ -1178,7 +1178,7 @@ class PPU {
 			$this->bgPriority[$tIndex] = (($value & 0x20) !== 0);
 			$this->sprCol[$tIndex] = ($value & 3) << 2;
 		} else if ($address % 4 == 3) {
-			$this->sprX[$tIndex] = $value
+			$this->sprX[$tIndex] = $value;
 		}
 	}
 
