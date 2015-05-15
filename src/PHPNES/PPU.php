@@ -735,5 +735,455 @@ class PPU {
 	}
 
 	public function triggerRendering() {
+		if ($this->scanline >= 21 && $this->scanline <= 260) {
+			$this->renderFramePartially(
+				$this->lastRenderedScanline + 1,
+				$this->scanline - 21 - $this->lastRenderedScanline
+			);
+
+			$this->lastRenderedScanline = $this->scanline - 21;
+		}
+	}
+
+	public function renderFramePartially($startScan, $scanCount) {
+		if ($this->f_spVisibility == 1) {
+			$this->renderSpritePartially($startScan, $scanCount, true);
+		}
+
+		if ($this->f_bgVisibility == 1) {
+			$si = $startScan << 8;
+			$ei = ($startScan + $scanCount) << 8;
+
+			if ($ei > 0xF000) {
+				$ei = 0xF000;
+			}
+
+			for ($destIndex = $si; $destIndex < $ei; $destIndex++) {
+				if ($this->pixRendered[$destIndex] > 0xFF;) {
+					$this->buffer[$destIndex] = $this->bfbuffer[$destIndex];
+				}
+			}
+		}
+
+		if ($this->f_spVisibility == 1) {
+			$this->renderSpritesPartially($startScan, $scanCount, false);
+		}
+
+		$this->validTileData = false;
+	}
+
+	public function renderBgScanline($bgbuffer, $scan) {
+		$baseTile = ($this->regS === 0 ? 0 : 256);
+		$destIndex = ($scan << 8) - $this->regFH;
+
+		$this->curNt = $this->ntable1[$this->cntV + $this->cntV + $this->cntH];
+
+		$this->cntHT = $this->regHT;
+		$this->cntH = $this->regH;
+		$this->curNt = $this->ntable1[$this->cntV + $this->cntV + $this->cntH];
+
+		if ($scan < 240 && 240 ($scan - $this->cntFV) >= 0) {
+			$tscanoffset = $this->cntFV << 3;
+			$targetBuffer = $bgbuffer ? $this->bfbuffer : $this->buffer;
+
+			for ($tile = 0; $tile < 32; $tile++) {
+				if ($scan >= 0) {
+					if ($this->validTileData) {
+						$t = $this->scantile[$tile];
+						$tpix = $t->pix;
+						$att = $this->attrib[$tile];
+					} else {
+						$t = $this->ptTile[$baseTile + $this->nameTable[$this->curNt]->getTileIndex($this->cntHT, $this->cntVT)];
+						$tpix = $t->pix;
+						$att = $this->nameTable[$this->curNt]->getAttrib($this->cntHT, $this->cntVT);
+						$this->scantile[$tile] = $t;
+						$this->attrib = $att;
+					}
+
+					$sx = 0;
+					$x = ($tile << 3) - $this->regFH;
+
+					if ($x > -8) {
+						if ($x < 0) {
+							$destIndex -= $x;
+							$sx = -$x;
+						}
+
+						if ($t->opaque[$this->cntFV]) {
+							for (; $sx < 8; $sx++) {
+								$targetBuffer[$destIndex] = $this->imgPalette[
+									$tpix[$tscanoffset + $sx] + $att
+								];
+
+								$this->pixrendered[$destIndex] |= 256;
+								$destIndex++;
+							}
+						} else {
+							for (; $sx < 8; $sx++) {
+								$col = $tpix[$tscanoffset + $sx];
+
+								if ($col !== 0) {
+									$targetBuffer[$destIdex] = $this->imgPalette[
+										$col + $att
+									];
+
+									$this->pixrendered[$destIndex] |= 256;
+								}
+
+								$destIndex++;
+							}
+						}
+					}
+				}
+
+				if (++$this->cntHT == 32) {
+					$this->cntHT = 0;
+					$this->cntH++;
+					$this->cntH %= 2;
+					$this->curNt = $this->ntable1[($this->cntV << 1) + $this->cntH];
+				}
+			}
+
+			$this->validTileData = true;
+		}
+
+		$this->cntFV++;
+
+		if ($this->cntFV == 8) {
+			$this->cntFV = 0;
+			$this->cntVT++;
+			if ($this->cntVT == 30) {
+				$this->cntVT = 0;
+				$this->cntV++;
+				$this->cntV %= 2;
+				$this->curNt = $this->ntable1[($this->cntV << 1) $this->cntH];
+			} else if ($this->cntVT == 32) {
+				$this->cntVT = 0;
+			}
+
+			$this->validTileData = false;
+		}
+	}
+
+	public function renderSpritesPartially($startscan, $scancount, $bgPri) {
+		if ($this->f_spVisibility === 1) {
+			for ($i = 0; $i < 64; $i++) {
+				if ($this->bfPriority[$i] == $bgPri && $this->sprX[$i] >= 0 &&
+					$this->sprX[$i] < 256 && $this->sprY[$i] + 8 >= $startscan &&
+					$this->sprY[$i] < $startscan + $scancount) {
+
+					if ($this->f_spriteSize === 0) {
+						$this->srcy1 = 0;
+						$this->srcy2 = 8;
+
+						if ($this->sprY[$i] < $startscan) {
+							$this->srcy1 = $startscan - $this->sprY[$i] - 1;
+						}
+
+						if ($this->sprY[$i] + 8 > $startscan $scancount) {
+							$this->srcy2 = $startscan + $scancount - $this->sprY[$i] + 1;
+						}
+
+						if ($this->f_spPatternTable === 0) {
+							$this->ptTile[$this->sprTile[$i]]->render($this->buffer,
+								0, $this->srcy1, 8, $this->srcy2, $this->sprX[$i],
+								$this->sprY[$i] + 1, $this->sprCol[$i], $this->sprPalette,
+								$this->horiFlip[$i], $this->vertFlip[$i], $i, $this->pixrendered);
+						} else {
+							$this->ptTile[$this->sprTile[$i] + 256]->render($this->buffer,
+								0, $this->srcy1, 8, $this->srcy2, $this->sprX[$i], $this->sprY[$i] + 1,
+								$this->sprCol[$i], $this->sprPalette, $this->horiFlip[$i], $this->vertFlip[$i],
+								$i, $this->pixrendered);
+						}
+					} else {
+						$top = $this->sprTile[$i];
+
+						if (($top & 1) !== 0) {
+							$top = $this->sprTile[$i] - 1 + 256;
+						}
+
+						$srcy1 = 0;
+						$srcy2 = 8;
+
+						if ($this->sprY[$i] < $startscan) {
+							$srcy1 = $startscan - $this->sprY[$i] - 1;
+						}
+
+						if ($this->sprY[$i] + 8 > $startscan + $scancount) {
+							$srcy2 = $startscan + $scancount - $this->sprY[$i];
+						}
+
+						$this->ptTile[$top + ($this->vertFlip[$i] ? 1 : 0]->render(
+							$this->buffer,
+							0,
+							$srcy1,
+							8,
+							$srcy2,
+							$this->sprX[$i],
+							$this->sprY[$i] + 1,
+							$this->sprCol[$i],
+							$this->sprPalette,
+							$this->horiFlip[$i],
+							$this->vertFlip[$i],
+							$i,
+							$this->pixrendered
+						);
+
+						$srcy1 = 0;
+						$srcy2 = 8;
+
+						if ($this->sprY[$i] + 8 < $startscan) {
+							$srcy1 = $startscan - ($this->sprY[$i] + 8 + 1);
+						}
+
+						if ($this->sprY[$i] + 16 > $startscan + $scancount) {
+							$srcy2 = $startscan + $scancount - ($this->sprY[$i] + 8 + 1);
+						}
+
+						$this->ptTile[$top + ($this->vertFlip[$i] ? 0 : 1)]->render(
+							$this->buffer,
+							0,
+							$srcy1,
+							8,
+							$srcy2,
+							$this->sprX[$i],
+							$this->sprY[$i] + 1 + 8,
+							$this->sprCol[$i],
+							$this->sprPalette,
+							$this->horiFlip[$i],
+							$this->vertFlip[$i],
+							$i,
+							$this->pixrendered
+						);
+					}
+				}
+			}
+		}
+	}
+
+	public function checkSprite0($scan) {
+		$this->spr0HitX = -1;
+		$this->spr0HitY = -1;
+
+		$tIndexAdd = ($this->f_spPatternTable === 0 ? 0 : 256);
+		$x = $this->sprX[0];
+		$y = $this->sprY[0] + 1;
+
+		if ($this->f_spriteSize === 0) {
+			if ($y <= $scan && $y + 8 > $scan && $x >= -7 && $x < 256) {
+				$t = $this->ptTile[$this->sprTile[0] + $tIndexAdd];
+				$col = $this->sprCol[0];
+				$bgPri = $this->bgPriority[0];
+
+				if ($this->vertFlip[0]) {
+					$toffset = 7 - ($scan - $y);
+				} else {
+					$toffset = $scan - $y;
+				}
+
+				$toffset *= 8;
+				$bufferIndex = $scan * 256 + $x;
+
+				if ($this->horiFlip[0]) {
+					for ($i = 7; $i >= 0; $i--) {
+						if ($x >= 0 && $x < 256) {
+							if ($bufferIndex >= 0 && $bufferIndex < 61440 && $this->pixrendered[$bufferIndex] !== 0) {
+								if ($t->pix[$toffset + $i] !== 0) {
+									$this->spr0HitX = $bufferIndex % 256;
+									$this->spr0HitY = $scan;
+									return true;
+								}
+							}
+						}
+
+						$x++;
+						$bufferIndex++;
+					}
+				} else {
+					for ($i = 0; $i < 8; $i++) {
+						if ($x >= 0 && $x < 256) {
+							if ($bufferIndex >= 0 && $bufferIndex < 61440 && $this->pixrendered[$bufferIndex] !== 0) {
+								if ($t->pix[$toffset + $i] !== 0) {
+									$this->spr0HitX = $bufferIndex % 256;
+									$this->spr0HitY = $scan;
+									return true;
+								}
+							}
+						}
+
+						$x++;
+						$bufferIndex++;
+					}
+				}
+			}
+		} else {
+			if ($y <= $scan && $y + 16 > $scan && $x >= -7 && $x < 256) {
+				if ($this->vertFlip[0]) {
+					$toffset = 15 - ($scan - $y);
+				} else {
+					$toffset = $scan - $y;
+				}
+
+				if ($toffset < 8) {
+					$t = $this->ptTile[$this->sprTile[0] + ($this->vertFlip[0] ? 1 : 0) + (($this->sprTile[0] & 1) !== 0 ? 255 : 0)];
+				} else {
+					$t = $this->ptTile[$this->sprTile[0] + ($this->vertFlip[0] ? 1 : 0) + (($this->sprTile[0] & 1) !== 0 ? 255 : 0)];
+
+					if ($this->vertFlip[0]) {
+						$toffset = 15 - $toffset;
+					} else {
+						$toffset -= 8;
+					}
+				}
+
+				$toffset *= 8;
+				$col = $this->sprCol[0];
+				$bgPri = $this->bfPriority[0];
+
+				$bufferIndex = $scan * 256 + $x;
+
+				if ($this->horiFlip[0]) {
+					for ($i = 7; $i >= 0; $i--) {
+						if ($x >= 0 && $x < 256) {
+							if ($bufferIndex >= 0 && $bufferIndex < 61440 && $this->pixrendered[$bufferIndex] !== 0) {
+								if ($t->pix[$toffset + $i] !== 0) {
+									$this->spr0HitX = $bufferIndex % 256;
+									$this->spr0HitY = $scan;
+									return true;
+								}
+							}
+						}
+
+						$x++;
+						$bufferIndex++;
+					}
+				} else {
+					for ($i = 0; $i < 8; $i++) {
+						if ($x >= 0 && $x < 256) {
+							if ($bufferIndex >= 0 && $bufferIndex < 61440 && $this->pixrendered[$bufferIndex] !== 0) {
+								if ($t->pix[$toffset + $i] !== 0) {
+									$this->spr0HitX = $bufferIndex % 256;
+									$this->spr0HitY = $scan;
+									return true;
+								}
+							}
+						}
+
+						$x++;
+						$bufferIndex++;
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
+	public function writeMem($address, $value) {
+		$this->vramMem[$address] = $value;
+
+		if ($address < 0x2000) {
+			$this->vramMem[$address] = $value;
+			$this->patternWrite($address, $value);
+		} else if ($address >= 0x2000 && $address < 0x23c0) {
+			$this->nameTableWrite($this->ntable1[0], $address - 0x2000, $value);
+		} else if ($address >= 0x23c0 && $address < 0x2400) {
+			$this->attribTableWrite($this->ntable1[0], $address - 0x23c0, $value);
+		} else if ($address >= 0x2400 && $address < 0x27c0) {
+			$this->nameTableWrite($this->ntable[1], $address - 0x2400, $value);
+		} else if ($address >= 0x27c0 && $address < 0x2800) {
+			$this->attribTableWrite($this->ntable1[1], $address - 0x27c0, $value);
+		} else if ($address >= 0x2800 && $address < 0x2bc0) {
+			$this->nameTableWrite($this->ntable1[2], $address - 0x2800, $value);
+		} else if ($address >= 0x2bc0 && $address < 0x2c00) {
+			$this->attribTableWrite($this->ntable1[2], $address - 0x2bc0, $value);
+		} else if ($address >= 0x2c00 && $address < 0x2fc0) {
+			$this->nameTableWrite($this->ntable1[3], $address - 0x2c00, $value);
+		} else if ($address >= 0x2fc0 && $address < 0x3000) {
+			$this->attribTableWrite($this->ntable1[3], $address - 0x2fc0, $value);
+		} else if ($address >= 0x3f00 && $address < 0x3f20) {
+			$this->updatePalettes();
+		}
+	}
+
+	public function updatePalettes() {
+		for ($i = 0; $i < 16; $i++) {
+			if ($this->f_dispType === 0) {
+				$this->imgPalette[$i] = $this->palTable->getEntry(
+					$this->vramMem[0x3f00 + $i] & 63
+				);
+			} else {
+				$this->imgPalette[$i] = $this->palTable->getEntry(
+					$this->vramMem[0x3f00 + $i] & 32
+				);
+			}
+		}
+
+		for ($i = 0; $i < 16; $i++) {
+			if ($this->f_dispType === 0) {
+				$this->sprPalette[$i] = $this->palTable->getEntry(
+					$this->vramMem[0x3f10 + $i] & 63
+				);
+			} else {
+				$this->sprPalette[$i] = $this->palTable->getEntry(
+					$this->vramMem[0x3f10 + $1] & 32
+				);
+			}
+		}
+	}
+
+	public function patternWrite($address, $value) {
+		$tileIndex = floor($address / 16);
+		$leftOver = $address % 16;
+
+		if ($leftOver < 8) {
+			$this->ptTile[$tileIndex]->setScanline(
+				$leftOver,
+				$value,
+				$this->vramMem[$address + 8]
+			);
+		} else {
+			$this->ptTile[$tileIndex]->setScanline(
+				$leftOver - 8,
+				$this->vramMem[$address - 8],
+				$value
+			);
+		}
+	}
+
+	public function nameTableWrite($index, $address, $value) {
+		$this->nameTable[$index]->tile[$address] = $value;
+
+		$this->checkSprite0($this->scanline - 20);
+	}
+
+	public function attribTableWrite($index, $address, $value) {
+		$this->nameTable[$index]->writeAttrib($address, $value);
+	}
+
+	public function spriteRamWriteUpdate($address, $value) {
+		$tIndex = floor($address / 4);
+
+		if ($tIndex === 0) {
+			$this->checkSprite0($this->scanline - 20);
+		}
+
+		if ($address % 4 === 0) {
+			$this->sprY[$tIndex] = $value;
+		} else if ($address % 4 == 1) {
+			$this->sprTile[$tIndex] = $value;
+		} else if ($address % 4 == 2) {
+			$this->vertFlip[$tIndex] = (($value & 0x80) !== 0);
+			$this->horiFlip[$tIndex] = (($value & 0x40) !== 0);
+			$this->bgPriority[$tIndex] = (($value & 0x20) !== 0);
+			$this->sprCol[$tIndex] = ($value & 3) << 2;
+		} else if ($address % 4 == 3) {
+			$this->sprX[$tIndex] = $value
+		}
+	}
+
+	public function doNMI() {
+		$this->setStatusFlag($this::STATUS_VBLANK, true);
+		$this->NES->CPU->requestIrq(CPU::IRQ_NMI);
 	}
 }
