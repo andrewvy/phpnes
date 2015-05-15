@@ -31,4 +31,9 @@ class MMAP {
 	public function write($addr, $val) {
 	}
 
+	public function clockIrqCounter() {
+	}
+
+	public function latchAccess($address) {
+	}
 }
