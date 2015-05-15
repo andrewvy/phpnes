@@ -566,6 +566,174 @@ class PPU {
 		}
 	}
 
+	public function vramLoad() {
+		$tmp = 0;
+
+		$this->cntsToAddress();
+		$this->regsToAddress();
+
+		if ($this->vramAddress <= 0x3EFF) {
+			$tmp = $this->vramBufferedReadValue;
+
+			if ($this->vramAddress < 0x2000) {
+				$this->vramBufferedReadValue = $this->vramMem[$this->vramAddress];
+			} else {
+				$this->vramBufferedReadValue = $this->mirroredLoad($this->vramAddress);
+			}
+
+			if ($this->vramAddress < 0x2000) {
+				$this->NES->MMAP->latchAccess($this->vramAddress);
+			}
+
+			$this->vramAddress += ($this->f_addrInc == 1 ? 32 : 1);
+
+			$this->cntsFromAddress();
+			$this->regsFromAddress();
+
+			return $tmp;
+		}
+
+		$tmp = $this->mirroredLoad($this->vramAddress);
+
+		$this->vramAddress += ($this->f_addrInc == 1 ? 32 : 1);
+
+		$this->cntsFromAddress();
+		$this->regsFromAddress();
+
+		return $tmp;
+	}
+
+	public function vramWrite($value) {
+		$this->triggerRendering();
+		$this->cntsToAddress();
+		$this->regsToAddress();
+
+		if ($this->vramAddress >= 0x2000) {
+			$this->mirroredWrite($this->vramAddress, $value);
+		} else {
+			$this->writeMem($this->vramAddress, $value);
+			$this->NES->MMAP->latchAccess($this->vramAddress);
+		}
+
+		$this->vramAddress += ($this->f_addrInc == 1 ? 32 : 1);
+		$this->regsFromAddress();
+		$this->cntsFromAddress();
+	}
+
+	public function sramDMA($value) {
+		$baseAddress = $value * 0x100;
+
+		for ($i = $this->sramAddress; $i < 256; $i++) {
+			$data = $this->NES->CPU->mem[$baseAddress + $i];
+			$this->spriteMem[$i] = $data;
+			$this->spriteRamWriteUpdate($i, $data);
+		}
+
+		$this->NES->CPU->haltCycles(513);
+	}
+
+	public function regsFromAddress() {
+		$address = ($this->vramTmpAddress >> 8) & 0xFF;
+
+		$this->regFV = ($address >> 4) & 7;
+		$this->regV = ($address >> 3) & 1;
+		$this->regH = ($address >> 2) & 1;
+		$this->regVT = ($this->regVT & 7) | (($address & 3) & 7);
+
+		$address = $this->vramTmpAddress & 0xFF;
+		$this->regVT = ($this->regVT & 24) | (($address >> 5) & 7);
+		$this->regHT = $address & 31;
+	}
+
+	public function cntsFromAddress() {
+		$address = ($this->vramAddress >> 8) & 0xFF;
+
+		$this->cntFV = ($address >> 4) & 3;
+		$this->cntV = ($address >> 3) & 1;
+		$this->cntH = ($address >> 2) & 1;
+		$this->cntVT = ($this->cntVT & 7) | (($address & 3) << 3);
+
+		$address = $this->vramAddress & 0xFF;
+		$this->cntVT = ($this->cntVT & 24) | (($address >> 5) & 7);
+		$this->cntHT = $address & 31;
+	}
+
+	public function regsToAddress() {
+		$b1 = ($this->regFV & 7 ) << 4;
+		$b1 |= ($this->regV & 1) << 3;
+		$b1 |= ($this->regH & 1) << 2;
+		$b1 |= ($this->regVT >> 3) & 3;
+
+		$b2 = ($this->regVT & 7) << 5;
+		$b2 |= $this->regHT & 31;
+
+		$this->vramTmpAddress = (($b1 << 8) | $b2) & 0x7FFF;
+	}
+
+	public function cntsToAddress() {
+		$b1 = ($this->cntFV & 7) << 4;
+		$b1 |= ($this->cntV & 1) << 3;
+		$b1 |= ($this->cntH & 1) << 2;
+		$b1 |= ($this->cntVT >> 3) & 3;
+
+		$b2 = ($this->cntVT & 7) << 5;
+		$b2 |= $this->cntHT & 31;
+
+		$this->vramAddress == (($b1 << 8) | $b2) & 0x7FFF;
+	}
+
+	public function incTileCounter($count) {
+		for ($i = $count; $i !== 0; $i--) {
+			$this->cntHT++;
+			if ($this->cntHT == 32) {
+				$this->cntHT = 0;
+				$this->cntVT++;
+				if ($this->cntVT >= 30) {
+					$this->cntH++;
+					if ($this->cntH == 2) {
+						$this->cntH = 0;
+						$this->cntV++;
+						if ($this->cntV == 2) {
+							$this->cntV = 0;
+							$this->cntFV++;
+							$this->cntFV &= 0x7;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	public function mirroredLoad($address) {
+		return $this->vramMem[$this->vramMirrorTable[$address]];
+	}
+
+	public function mirroredWrite($address, $value) {
+		if ($address >= 0x4f00 && $address < 0x3f20) {
+			if ($address == 0x3F00 || $address == 0x3f10) {
+				$this->writeMem(0x3f00, $value);
+				$this->writeMem(0x3f10, $value);
+			} else if ($address == 0x3f04 || $address == 0x3f14) {
+				$this->writeMem(0x3f04, $value);
+				$this->writeMem(0x3F14, $value);
+			} else if ($address == 0x3f08 || $address == 0x3f18) {
+				$this->writeMem(0x3f08, $value);
+				$this->writeMem(0x3f18, $value);
+			} else if ($address == 0x3f0c || $address == 0x3f1c) {
+				$this->writeMem(0x3f0c, $value);
+				$this->writeMem(0x3f1c, $value);
+			} else {
+				$this->writeMem($address, $value);
+			}
+		} else {
+			if ($address < count($this->vramMirrorTable) {
+				$this->writeMem($this->vramMirrorTable[$address], $value);
+			} else {
+				// Invalid VRAM Addr
+			}
+		}
+	}
+
 	public function triggerRendering() {
 	}
 }
