@@ -10,6 +10,8 @@
 
 namespace PHPNES;
 
+use PHPNES\ROM;
+use PHPNES\CPU;
 use PHPNES\PPU\Tile;
 use PHPNES\PPU\NameTable;
 use PHPNES\PPU\PaletteTable;
@@ -267,7 +269,7 @@ class PPU {
 		$this->defineMirrorRegion(0x3000, 0x2000, 0xf00);
 		$this->defineMirrorRegion(0x4000, 0x0000, 0x4000);
 
-		if ($mirroring == $this->NES->ROM::HORIZONTAL_MIRRORING) {
+		if ($mirroring == ROM::HORIZONTAL_MIRRORING) {
 			$this->ntable1[0] = 0;
 			$this->ntable1[1] = 0;
 			$this->ntable1[2] = 1;
@@ -276,7 +278,7 @@ class PPU {
 			$this->defineMirrorRegion(0x2400, 0x2000, 0x400);
 			$this->defineMirrorRegion(0x2c00, 0x2800, 0x400);
 
-		} else if ($mirroring == $this->NES->ROM::VERTICAL_MIRRORING) {
+		} else if ($mirroring == ROM::VERTICAL_MIRRORING) {
 			$this->ntable1[0] = 0;
 			$this->ntable1[1] = 1;
 			$this->ntable1[2] = 0;
@@ -285,7 +287,7 @@ class PPU {
 			$this->defineMirrorRegion(0x2800, 0x2000, 0x400);
 			$this->defineMirrorRegion(0x2c00, 0x2400, 0x400);
 
-		} else if ($mirroring == $this->NES->ROM::SINGLESCREEN_MIRRORING) {
+		} else if ($mirroring == ROM::SINGLESCREEN_MIRRORING) {
 			$this->ntable1[0] = 0;
 			$this->ntable1[1] = 0;
 			$this->ntable1[2] = 0;
@@ -295,7 +297,7 @@ class PPU {
 			$this->defineMirrorRegion(0x2800, 0x2000, 0x400);
 			$this->defineMirrorRegion(0x2c00, 0x2000, 0x400);
 
-		} else if ($mirroring == $this->NES->ROM::SINGLESCREEN_MIRRORING2) {
+		} else if ($mirroring == ROM::SINGLESCREEN_MIRRORING2) {
 			$this->ntable1[0] = 1;
 			$this->ntable1[1] = 1;
 			$this->ntable1[2] = 1;
@@ -320,7 +322,7 @@ class PPU {
 	}
 
 	public function startVBlank() {
-		$this->NES->CPU->requestIrq($this->NES->CPU::IRQ_NMI);
+		$this->NES->CPU->requestIrq(CPU::IRQ_NMI);
 
 		if ($this->lastRenderedScanline < 239) {
 			$this->renderFramePartially(
@@ -470,7 +472,7 @@ class PPU {
 				}
 
 				for ($i = 0; $i < 240; $i++) {
-					$this->buffer[($i << 8) + $this->spr0HitX = 0x55FF55;
+					$this->buffer[($i << 8) + $this->spr0HitX] = 0x55FF55;
 				}
 			}
 		}
@@ -498,7 +500,7 @@ class PPU {
 	}
 
 	public function setStatusFlag($flag, $value) {
-		$n = $1 << $flag;
+		$n = 1 << $flag;
 		$this->NES->CPU->mem[0x2002] =
 			(($this->NES->CPU->mem[0x2002] & (255 - $n)) | ($value ? $n : 0));
 	}
@@ -562,5 +564,8 @@ class PPU {
 		if ($this->vramAddress < 0x2000) {
 			$this->NES->MMAP->latchAccess($this->vramAddress);
 		}
+	}
+
+	public function triggerRendering() {
 	}
 }
