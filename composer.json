@@ -8,7 +8,9 @@
             "email": "andrew@andrewvy.com"
         }
     ],
-    "require": {},
+    "require": {
+		"react/react": "0.4.*"
+	},
     "autoload": {
         "psr-4": {
             "PHPNES\\": "src/PHPNES/"
