@@ -96,7 +96,8 @@ class CPU {
 		$this->F_BRK = 1;
 		$this->F_BRK_NEW = 1;
 
-		$this->OpData = new OpData();
+		$opdata = new OpData();
+		$this->opdata = $opdata->opdata;
 		$this->cyclesToHalt = 0;
 
 		// Reset crash bool
@@ -108,7 +109,521 @@ class CPU {
 	}
 
 	public function emulate() {
+		$temp = 0;
+		$add = 0;
+
+		if ($this->irqRequested) {
+			$temp =
+				($this->F_CARRY) |
+				(($this->F_ZERO === 0 ? 1 : 0) << 1) |
+				($this->F_INTERRUPT << 2) |
+				($this->F_DECIMAL << 3) |
+				($this->F_BRK << 4) |
+				($this->F_NOTUSED << 5) |
+				($this->F_OVERFLOW << 6) |
+				($this->F_SIGN << 7);
+
+			$this->REG_PC_NEW = $this->REG_PC;
+			$this->F_INTERRUPT_NEW = $this->F_INTERRUPT;
+
+			switch ($this->irqType) {
+				case 0:
+					if ($this->F_INTERRUPT != 0) {
+						break;
+					}
+
+					$this->doIrq($temp);
+					break;
+				case 1:
+					$this->doNonMaskableInterrupt($temp);
+					break;
+				case 2:
+					$this->doResetInterrupt();
+					break;
+			}
+
+			$this->REG_PC = $this->REG_PC_NEW;
+			$this->F_INTERRUPT = $this->F_INTERRUPT_NEW;
+			$this->F_BRK = $this->F_BRK_NEW;
+			$this->irqRequested = false;
+		}
+
+		$opinf = $this->opdata[$this->NES->MMAP->load($this->REG_PC + 1)];
+		$cycleCount = ($opinf >> 24);
+		$cycleAdd = 0;
+
+		$addrMode = ($opinf >> 8) & 0xFF;
+		$opaddr = $this->REG_PC;
+		$this->REG_PC += (($opinf >> 16) & 0xFF);
+		$addr = 0;
+
+		switch ($addrMode) {
+			case 0:
+				$addr = $this->load($opaddr + 2);
+				break;
+			case 1:
+				$addr = $this->load($opaddr + 2);
+				if ($addr < 0x80) {
+					$addr += $this->REG_PC;
+				} else {
+					$addr += $this->REG_PC - 256;
+				}
+				break;
+			case 2:
+				break;
+			case 3:
+				$addr = $this->load16bit($opaddr + 2);
+				break;
+			case 4:
+				$addr = $this->REG_ACC;
+				break;
+			case 5:
+				$addr = $this->REG_PC;
+				break;
+			case 6:
+				$addr = ($this->load($opaddr + 2) + $this->REG_X) & 0xFF;
+				break;
+			case 7:
+				$addr = ($this->load($opaddr + 2) + $this->REG_Y) & 0xFF;
+				break;
+			case 8:
+				$addr = $this->load16bit($opaddr + 2);
+				if (($addr & 0xFF00) != (($addr + $this->REG_X) & 0xFF)) {
+					$cycleAdd = 1;
+				}
+
+				$addr += $this->REG_X;
+				break;
+			case 9:
+				$addr = $this->load16bit($opaddr + 2);
+				if (($addr & 0xFF) != (($addr + $this->REG_Y) & 0xFF00)) {
+					$cycleAdd = 1;
+				}
+
+				$addr += $this->REG_Y;
+				break;
+			case 10:
+				$addr = $this->load($opaddr + 2);
+				if (($addr & 0xFF00) != (($addr + $this->REG_X) & 0xFF00)) {
+					$cycleAdd = 1;
+				}
+
+				$addr += $this->REG_X;
+				$addr &= 0xFF;
+				$addr = $this->load16bit($addr);
+				break;
+			case 11:
+				$addr = $this->load16bit($this->load($opaddr + 2));
+				if (($addr & 0xFF00) != (($addr + $this->REG_Y) & 0xFF00)) {
+					$cycleAdd = 1;
+				}
+				$addr += $this->REG_Y;
+				break;
+			case 12:
+				$addr = $this->load16bit($opaddr + 2);
+				if ($addr < 0x1FFF) {
+					$addr = $this->mem[$addr] + ($this->mem[($addr & 0xFF00) | ((($addr & 0xFF) + 1) & 0xFF)] << 8);
+				} else {
+					$addr = $this->NES->MMAP->load($addr) + ($this->NES->MMAP->load(($addr & 0xFF00) | ((($addr & 0xFF) + 1) & 0xFF)) << 8);
+				}
+				break;
+		}
+
+		$addr &= 0xFFFF;
+
+		switch ($opinf & 0xFF) {
+			case 0:
+				$temp = $this->REG_ACC + $this->load($addr) + $this->F_CARRY;
+				$this->F_OVERFLOW = ((!((($this->REG_ACC ^ $this->load($addr)) & 0x80) != 0) && ((($this->REG_ACC ^ $temp) & 0x80)) != 0) ? 1 : 0);
+				$this->F_CARRY = ($temp > 255 ? 1 : 0);
+				$this->F_SIGN = ($temp >> 7) & 1;
+				$this->F_ZERO = $temp & 0xFF;
+				$this->REG_ACC = ($temp & 255);
+				$cycleCount += $cycleAdd;
+				break;
+			case 1:
+				$this->REG_ACC = $this->REG_ACC & $this->load($addr);
+				$this->F_SIGN = ($this->REG_ACC >> 7) & 1;
+				$this->F_ZERO = $this->REG_ACC;
+
+				if ($addrMode != 11) {
+					$cycleCount += $cycleAdd;
+				}
+				break;
+			case 2:
+				if ($addrMode == 4) {
+					$this->F_CARRY = ($this->REG_ACC >> 7) & 1;
+					$this->REG_ACC = ($this->REG_ACC << 1) & 255;
+					$this->F_SIGN = ($this->REG_ACC >> 7) & 1;
+					$this->F_ZERO = $this->REG_ACC;
+				} else {
+					$temp = $this->load($addr);
+					$this->F_CARRY = ($temp >> 7) & 1;
+					$temp = ($temp << 1) & 255;
+					$this->F_SIGN = ($temp >> 7) & 1;
+					$this->F_ZERO = $temp;
+					$this->write($addr, $temp);
+				}
+				break;
+			case 3:
+				if ($this->F_CARRY == 0) {
+					$cycleCount += (($opaddr & 0xFF00) != ($addr & 0xFF00) ? 2 : 1);
+					$this->REG_PC = $addr;
+				}
+				break;
+			case 4:
+				if ($this->F_CARRY == 1) {
+					$cycleCount += (($opaddr & 0xFF00) != ($addr & 0xFF00) ? 2 : 1);
+					$this->REG_PC = $addr;
+				}
+				break;
+			case 5:
+				if ($this->F_ZERO == 0) {
+					$cycleCount += (($opaddr & 0xFF00) != ($addr & 0xFF00) ? 2 : 1);
+					$this->REG_PC = $addr;
+				}
+				break;
+			case 6:
+				$temp = $this->load($addr);
+				$this->F_SIGN = ($temp >> 7) & 1;
+				$this->F_OVERFLOW = ($temp >> 6) & 1;
+				$temp &= $this->REG_ACC;
+				$this->F_ZERO = $temp;
+				break;
+			case 7:
+				if ($this->F_SIGN == 1) {
+					$cycleCount++;
+					$this->REG_PC = $addr;
+				}
+				break;
+			case 8:
+				if ($this->F_ZERO != 0) {
+					$cycleCount += (($opaddr & 0xFF00) != ($addr & 0xFF00) ? 2 : 1);
+					$this->REG_PC = $addr;
+				}
+				break;
+			case 9:
+				if ($this->F_SIGN == 0) {
+					$cycleCount += (($opaddr & 0xFF00) != ($addr & 0xFF00) ? 2 : 1);
+					$this->REG_PC = $addr;
+				}
+				break;
+			case 10:
+				$this->REG_PC += 2;
+				$this->push(($this->REG_PC >> 8) & 255);
+				$this->push($this->REG_PC & 255);
+				$this->F_BRK = 1;
+
+				$this->push(
+					($this->F_CARRY) |
+					(($this->F_ZERO == 0 ? 1 : 0) << 1) |
+					($this->F_INTERRUPT << 2) |
+					($this->F_DECIMAT << 3) |
+					($this->F_BRK << 4) |
+					($this->F_NOTUSED << 5) |
+					($this->F_OVERFLOW << 6) |
+					($this->F_SIGN << 7)
+				);
+
+				$this->F_INTERRUPT = 1;
+				$this->REG_PC = $this->load16bit(0xFFFE);
+				$this->REG_PC--;
+				break;
+			case 11:
+				if ($this->F_OVERFLOW == 0) {
+					$cycleCount += (($opaddr & 0xFF00) != ($addr & 0xFF00) ? 2 : 1);
+					$this->REG_PC = $addr;
+				}
+				break;
+			case 12:
+				if ($this->F_OVERFLOW == 1) {
+					$cycleCount += (($opaddr & 0xFF00) != ($addr & 0xFF00) ? 2 : 1);
+					$this->REG_PC = $addr;
+				}
+				break;
+			case 13:
+				$this->F_CARRY = 0;
+				break;
+			case 14:
+				$this->F_DECIMAL = 0;
+				break;
+			case 15:
+				$this->F_INTERRUPT = 0;
+				break;
+			case 16:
+				$this->F_OVERFLOW = 0;
+				break;
+			case 17:
+				$temp = $this->REG_ACC - $this->load($addr);
+				$this->F_CARRY = ($temp >= 0 ? 1 : 0);
+				$this->F_SIGN = ($temp >> 7) & 1;
+				$this->F_ZERO = $temp & 0xFF;
+				$cycleCount += $cycleAdd;
+				break;
+			case 18:
+				$temp = $this->REG_X - $this->load($addr);
+				$this->F_CARRY = ($temp >= 0 ? 1 : 0);
+				$this->F_SIGN = ($temp >> 7) & 1;
+				$this->F_ZERO = $temp & 0xFF;
+				break;
+			case 19:
+				$temp = $this->REG_Y - $this->load($addr);
+				$this->F_CARRY = ($temp >= 0 ? 1 : 0);
+				$this->F_SIGN = ($temp >> 7) & 1;
+				$this->F_ZERO = $temp & 0xFF;
+				break;
+			case 20:
+				$temp = ($this->load($addr) - 1) & 0xFF;
+				$this->F_SIGN = ($temp >> 7 ) & 1;
+				$this->F_ZERO = $temp;
+				$this->write($addr, $temp);
+				break;
+			case 21:
+				$this->REG_X = ($this->REG_X - 1) & 0xFF;
+				$this->F_SIGN = ($this->REG_X >> 7) & 1;
+				$this->F_ZERO = $this->REG_X;
+				break;
+			case 22:
+				$this->REG_Y = ($this->REG_Y - 1) & 0xFF;
+				$this->F_SIGN = ($this->REG_Y >> 7) & 1;
+				$this->F_ZERO = $this->REG_Y;
+				break;
+			case 23:
+				$this->REG_ACC = ($this->load($addr) ^ $this->REG_ACC) & 0xFF;
+				$this->F_SIGN = ($this->REG_ACC >> 7) & 1;
+				$this->F_ZERO = $this->REG_ACC;
+				$cycleCount += $cycleAdd;
+				break;
+			case 24:
+				$temp = ($this->load($addr) + 1) & 0xFF;
+				$this->F_SIGN = ($temp >> 7) & 1;
+				$this->F_ZERO = $temp;
+				$this->write($addr, $temp & 0xFF);
+				break;
+			case 25:
+				$this->REG_X = ($this->REG_X + 1) & 0xFF;
+				$this->F_SIGN = ($this->REG_X >> 7) & 1;
+				$this->F_ZERO = $this->REG_X;
+				break;
+			case 26:
+				$this->REG_Y++;
+				$this->REG_Y &= 0xFF;
+				$this->F_SIGN = ($htis->REG_Y >> 7) & 1;
+				$this->F_ZERO = $this->REG_Y;
+				break;
+			case 27:
+				$this->REG_PC = $addr - 1;
+				break;
+			case 28:
+				$this->push(($this->REG_PC >> 8) & 255);
+				$this->push($this->REG_PC & 255);
+				$this->REG_PC = $addr - 1;
+				break;
+			case 29:
+				$this->REG_ACC = $this->load($addr);
+				$this->F_SIGN = ($this->REG_ACC >> 7) & 1;
+				$this->F_ZERO = $this->REG_ACC;
+				$cycleCount += $cycleAdd;
+				break;
+			case 30:
+				$this->REG_X = $this->load($addr);
+				$this->F_SIGN = ($this->REG_X >> 7) & 1;
+				$this->F_ZERO = $this->REG_X;
+				$cycleCount += $cycleAdd;
+				break;
+			case 31:
+				$this->REG_Y = $this->load($addr);
+				$this->F_SIGN = ($this->REG_Y >> 7) & 1;
+				$this->F_ZERO = $this->REG_Y;
+				$cycleCount += $cycleAdd;
+				break;
+			case 32:
+				if ($addrMode == 4) {
+					$temp = ($this->REG_ACC & 0xFF);
+					$this->F_CARRY = $temp & 1;
+					$temp >>= 1;
+					$this->REG_ACC = $temp;
+				} else {
+					$temp = $this->load($addr) & 0xFF;
+					$this->F_CARRY = $temp & 1;
+					$temp >>= 1;
+					$this->write($addr, $temp);
+				}
+
+				$this->F_SIGN = 0;
+				$this->F_ZERO = $temp;
+				break;
+			case 33:
+				break;
+			case 34:
+				$temp = ($this->load($addr) | $this->REG_ACC) & 255;
+				$this->F_SIGN = ($temp >> 7) & 1;
+				$this->F_ZERO = $temp;
+				$this->REG_ACC = $temp;
+				if ($addrMode != 11) {
+					$cycleCount += $cycleAdd;
+				}
+				break;
+			case 35:
+				$this->push($this->REG_ACC);
+				break;
+			case 36:
+				$this->F_BRK = 1;
+				$this->push(
+					($this->F_CARRY) |
+					(($this->F_ZERO == 0 ? 1 : 0) << 1) |
+					($this->F_INTERRUPT << 2) |
+					($this->F_DECIMAL << 3) |
+					($this->F_BRK << 4) |
+					($this->F_NOTUSED << 5) |
+					($this->F_OVERFLOW << 6) |
+					($this->F_SIGN << 7)
+				);
+				break;
+			case 37:
+				$this->REG_ACC = $this->pull();
+				$this->F_SIGN = ($this->REG_ACC >> 7) & 1;
+				$this->F_ZERO = $this->REG_ACC;
+				break;
+			case 38:
+				$temp = $this->pull();
+				$this->F_CARRY = ($temp) & 1;
+				$this->F_ZERO = ((($temp >> 1) & 1) == 1) ? 0 : 1;
+				$this->F_INTERRUPT = ($temp >> 2) & 1;
+				$this->F_DECIMAL = ($temp >> 3) & 1;
+				$this->F_BRK = ($temp >> 4) & 1;
+				$this->F_NOTUSED = ($temp >> 5) & 1;
+				$this->F_OVERFLOW = ($temp >> 6) & 1;
+				$this->F_SIGN = ($temp >> 7) & 1;
+
+				$this->F_NOTUSED = 1;
+				break;
+			case 39:
+				if ($addrMode == 4) {
+					$temp = $this->REG_ACC;
+					$add = $this->F_CARRY;
+					$this->F_CARRY = ($temp >> 7) & 1;
+					$temp = (($temp << 1) & 0xFF) + $add;
+					$this->REG_ACC = $tmep;
+				} else {
+					$temp = $this->load($addr);
+					$add = $this->F_CARRY;
+					$this->F_CARRY = ($temp >> 7) & 1;
+					$temp = (($temp << 1) & 0xFF) + $add;
+					$this->write($addr, $temp);
+				}
+
+				$this->F_SIGN = ($temp >> 7) & 1;
+				$this->F_ZERO = $temp;
+				break;
+			case 40:
+				if ($addrMode == 4) {
+					$add = $this->F_CARRY << 7;
+					$this->F_CARRY = $this->REG_ACC & 1;
+					$temp = ($this->REG_ACC >> 1) + $add;
+					$this->REG_ACC = $temp;
+				} else {
+					$temp = $this->load($addr);
+					$add = $this->F_CARRY << 7;
+					$this->F_CARRY = $temp & 1;
+					$temp = ($temp >> 1) + $add;
+					$this->write($addr, $temp);
+				}
+
+				$this->F_SIGN = ($temp >> 7) & 1;
+				$this->F_ZERO = $temp;
+				break;
+			case 41:
+				$temp = $this->pull();
+				$this->F_CARRY = ($temp) & 1;
+				$this->F_ZERO = (($temp >> 1) & 1) == 0 ? 1 : 0;
+				$this->F_INTERRUPT = ($temp >> 2) & 1;
+				$this->F_DECIMAL = ($temp >> 3) & 1;
+				$this->F_BRK = ($temp >> 4) & 1;
+				$this->F_NOTUSED = ($temp >> 5) & 1;
+				$this->F_OVERFLOW = ($temp >> 6) & 1;
+				$this->F_SIGN = ($temp >> 7) & 1;
+
+				$this->REG_PC = $this->pull();
+				$this->REG_PC--;
+				$this->F_NOTUSED = 1;
+				break;
+			case 42:
+				$this->REG_PC = $this->pull();
+				$this->REG_PC += ($this->pull() << 8);
+
+				if ($this->REG_PC == 0xFFFF) {
+					return;
+				}
+				break;
+			case 43:
+				$temp = $this->REG_ACC - $this->load($addr) - (1 - $this->F_CARRY);
+				$this->F_SIGN = ($temp >> 7) & 1;
+				$this->F_ZERO = $temp & 0xFF;
+				$this->F_OVERFLOW = (((($this->REG_ACC ^ $temp) & 0x80) != 0 && (($this->REG_ACC ^ $this->load($addr)) & 0x80) != 0) ? 1 : 0);
+				$this->F_CARRY = ($temp < 0 ? 0 : 1);
+				$this->REG_ACC = ($temp & 0xFF);
+
+				if ($addrMode != 11) {
+					$cycleCount += $cycleAdd;
+				}
+				break;
+			case 44:
+				$this->F_CARRY = 1;
+				break;
+			case 45:
+				$this->F_DECIMAL = 1;
+				break;
+			case 46:
+				$this->F_INTERRUPT = 1;
+				break;
+			case 47:
+				$this->write($addr, $this->REG_ACC);
+				break;
+			case 48:
+				$this->write($addr, $this->REG_X);
+				break;
+			case 49:
+				$this->write($addr, $this->REG_Y);
+				break;
+			case 50:
+				$this->REG_X = $this->REG_ACC;
+				$this->F_SIGN = ($this->REG_ACC >> 7) & 1;
+				$this->F_ZERO = $this->REG_ACC;
+				break;
+			case 51:
+				$this->REG_Y = $this->REG_ACC;
+				$this->F_SIGN = ($this->REG_ACC >> 7) & 1;
+				$this->F_ZERO = $this->REG_ACC;
+				break;
+			case 52:
+				$this->REG_X = ($this->REG_SP - 0x0100);
+				$this->F_SIGN = ($this->REG_SP >> 7) & 1;
+				$this->F_ZERO = $this->REG_X;
+				break;
+			case 53:
+				$this->REG_ACC = $this->REG_X;
+				$this->F_SIGN = ($this->REG_X >> 7) & 1;
+				$this->F_ZERO = $this->REG_X;
+				break;
+			case 54:
+				$this->REG_SP = ($this->REG_X + 0x0100);
+				$this->stackWrap();
+				break;
+			case 55:
+				$this->REG_ACC = $this->REG_Y;
+				$this->F_SIGN = ($this->REG_Y >> 7) & 1;
+				$this->F_ZERO = $this->REG_Y;
+				break;
+			default:
+				$this->NES->stop();
+				$this->NES->crashMessage = "Game crashed, invalid opcode.";
+				break;
+		}
+
+		return $cycleCount;
 	}
+
 
 	public function load($addr) {
 		if ($addr < 0x2000) {
