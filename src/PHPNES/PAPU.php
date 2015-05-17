@@ -19,4 +19,7 @@ class PAPU {
 
 	public function reset() {
 	}
+
+	public function writeReg($address, $value) {
+	}
 }
