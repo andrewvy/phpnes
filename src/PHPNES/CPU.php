@@ -617,7 +617,7 @@ class CPU {
 				break;
 			default:
 				$this->NES->stop();
-				$this->NES->crashMessage = "Game crashed, invalid opcode.";
+				throw new \Exception("Game crashed, invalid opcode: ".$opaddr);
 				break;
 		}
 

@@ -72,7 +72,7 @@ class NES {
 			// Start running rom!
 			$this->isRunning = true;
 
-			$this->loop->addPeriodicTimer(1000 / 60, function() {
+			$this->loop->addPeriodicTimer(1 / 60, function() {
 				$this->frame();
 			});
 
