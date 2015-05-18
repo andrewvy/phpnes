@@ -29,3 +29,4 @@ $romData = file_get_contents("roms/croom/croom.nes");
 
 $nes->loadRom($romData);
 $nes->start();
+$nes->frame();

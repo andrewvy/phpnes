@@ -123,7 +123,7 @@ class CPU {
 				($this->F_OVERFLOW << 6) |
 				($this->F_SIGN << 7);
 
-			$this->REG_PC_NEW = $this->REG_PC;
+			$this->PC_NEW = $this->PC;
 			$this->F_INTERRUPT_NEW = $this->F_INTERRUPT;
 
 			switch ($this->irqType) {
@@ -142,19 +142,19 @@ class CPU {
 					break;
 			}
 
-			$this->REG_PC = $this->REG_PC_NEW;
+			$this->PC = $this->PC_NEW;
 			$this->F_INTERRUPT = $this->F_INTERRUPT_NEW;
 			$this->F_BRK = $this->F_BRK_NEW;
 			$this->irqRequested = false;
 		}
 
-		$opinf = $this->opdata[$this->NES->MMAP->load($this->REG_PC + 1)];
+		$opinf = $this->opdata[$this->NES->MMAP->load($this->PC + 1)];
 		$cycleCount = ($opinf >> 24);
 		$cycleAdd = 0;
 
 		$addrMode = ($opinf >> 8) & 0xFF;
-		$opaddr = $this->REG_PC;
-		$this->REG_PC += (($opinf >> 16) & 0xFF);
+		$opaddr = $this->PC;
+		$this->PC += (($opinf >> 16) & 0xFF);
 		$addr = 0;
 
 		switch ($addrMode) {
@@ -164,9 +164,9 @@ class CPU {
 			case 1:
 				$addr = $this->load($opaddr + 2);
 				if ($addr < 0x80) {
-					$addr += $this->REG_PC;
+					$addr += $this->PC;
 				} else {
-					$addr += $this->REG_PC - 256;
+					$addr += $this->PC - 256;
 				}
 				break;
 			case 2:
@@ -178,7 +178,7 @@ class CPU {
 				$addr = $this->REG_ACC;
 				break;
 			case 5:
-				$addr = $this->REG_PC;
+				$addr = $this->PC;
 				break;
 			case 6:
 				$addr = ($this->load($opaddr + 2) + $this->REG_X) & 0xFF;
@@ -268,19 +268,19 @@ class CPU {
 			case 3:
 				if ($this->F_CARRY == 0) {
 					$cycleCount += (($opaddr & 0xFF00) != ($addr & 0xFF00) ? 2 : 1);
-					$this->REG_PC = $addr;
+					$this->PC = $addr;
 				}
 				break;
 			case 4:
 				if ($this->F_CARRY == 1) {
 					$cycleCount += (($opaddr & 0xFF00) != ($addr & 0xFF00) ? 2 : 1);
-					$this->REG_PC = $addr;
+					$this->PC = $addr;
 				}
 				break;
 			case 5:
 				if ($this->F_ZERO == 0) {
 					$cycleCount += (($opaddr & 0xFF00) != ($addr & 0xFF00) ? 2 : 1);
-					$this->REG_PC = $addr;
+					$this->PC = $addr;
 				}
 				break;
 			case 6:
@@ -293,25 +293,25 @@ class CPU {
 			case 7:
 				if ($this->F_SIGN == 1) {
 					$cycleCount++;
-					$this->REG_PC = $addr;
+					$this->PC = $addr;
 				}
 				break;
 			case 8:
 				if ($this->F_ZERO != 0) {
 					$cycleCount += (($opaddr & 0xFF00) != ($addr & 0xFF00) ? 2 : 1);
-					$this->REG_PC = $addr;
+					$this->PC = $addr;
 				}
 				break;
 			case 9:
 				if ($this->F_SIGN == 0) {
 					$cycleCount += (($opaddr & 0xFF00) != ($addr & 0xFF00) ? 2 : 1);
-					$this->REG_PC = $addr;
+					$this->PC = $addr;
 				}
 				break;
 			case 10:
-				$this->REG_PC += 2;
-				$this->push(($this->REG_PC >> 8) & 255);
-				$this->push($this->REG_PC & 255);
+				$this->PC += 2;
+				$this->push(($this->PC >> 8) & 255);
+				$this->push($this->PC & 255);
 				$this->F_BRK = 1;
 
 				$this->push(
@@ -326,19 +326,19 @@ class CPU {
 				);
 
 				$this->F_INTERRUPT = 1;
-				$this->REG_PC = $this->load16bit(0xFFFE);
-				$this->REG_PC--;
+				$this->PC = $this->load16bit(0xFFFE);
+				$this->PC--;
 				break;
 			case 11:
 				if ($this->F_OVERFLOW == 0) {
 					$cycleCount += (($opaddr & 0xFF00) != ($addr & 0xFF00) ? 2 : 1);
-					$this->REG_PC = $addr;
+					$this->PC = $addr;
 				}
 				break;
 			case 12:
 				if ($this->F_OVERFLOW == 1) {
 					$cycleCount += (($opaddr & 0xFF00) != ($addr & 0xFF00) ? 2 : 1);
-					$this->REG_PC = $addr;
+					$this->PC = $addr;
 				}
 				break;
 			case 13:
@@ -412,12 +412,12 @@ class CPU {
 				$this->F_ZERO = $this->REG_Y;
 				break;
 			case 27:
-				$this->REG_PC = $addr - 1;
+				$this->PC = $addr - 1;
 				break;
 			case 28:
-				$this->push(($this->REG_PC >> 8) & 255);
-				$this->push($this->REG_PC & 255);
-				$this->REG_PC = $addr - 1;
+				$this->push(($this->PC >> 8) & 255);
+				$this->push($this->PC & 255);
+				$this->PC = $addr - 1;
 				break;
 			case 29:
 				$this->REG_ACC = $this->load($addr);
@@ -544,15 +544,15 @@ class CPU {
 				$this->F_OVERFLOW = ($temp >> 6) & 1;
 				$this->F_SIGN = ($temp >> 7) & 1;
 
-				$this->REG_PC = $this->pull();
-				$this->REG_PC--;
+				$this->PC = $this->pull();
+				$this->PC--;
 				$this->F_NOTUSED = 1;
 				break;
 			case 42:
-				$this->REG_PC = $this->pull();
-				$this->REG_PC += ($this->pull() << 8);
+				$this->PC = $this->pull();
+				$this->PC += ($this->pull() << 8);
 
-				if ($this->REG_PC == 0xFFFF) {
+				if ($this->PC == 0xFFFF) {
 					return;
 				}
 				break;
@@ -597,8 +597,8 @@ class CPU {
 				$this->F_ZERO = $this->REG_ACC;
 				break;
 			case 52:
-				$this->REG_X = ($this->REG_SP - 0x0100);
-				$this->F_SIGN = ($this->REG_SP >> 7) & 1;
+				$this->REG_X = ($this->SP - 0x0100);
+				$this->F_SIGN = ($this->SP >> 7) & 1;
 				$this->F_ZERO = $this->REG_X;
 				break;
 			case 53:
@@ -607,7 +607,7 @@ class CPU {
 				$this->F_ZERO = $this->REG_X;
 				break;
 			case 54:
-				$this->REG_SP = ($this->REG_X + 0x0100);
+				$this->SP = ($this->REG_X + 0x0100);
 				$this->stackWrap();
 				break;
 			case 55:

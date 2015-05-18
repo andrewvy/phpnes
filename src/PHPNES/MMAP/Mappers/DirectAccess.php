@@ -77,7 +77,7 @@ class DirectAccess extends Mapper {
 					case 0x0:
 						return $this->NES->CPU->mem[0x2000];
 					case 0x1:
-						return $this->NES->CPU->mem[0x2001]
+						return $this->NES->CPU->mem[0x2001];
 					case 0x2:
 						return $this->NES->PPU->readStatusRegister();
 					case 0x3:
@@ -260,7 +260,7 @@ class DirectAccess extends Mapper {
 		return $ret;
 	}
 	public function loadRom() {
-		if (!$this->NES->ROM->isValid || $this->NES->ROM->romCount < 1) {
+		if (!$this->NES->rom->isValid || $this->NES->rom->romCount < 1) {
 			return;
 		}
 
@@ -272,7 +272,7 @@ class DirectAccess extends Mapper {
 	}
 
 	public function loadPRGROM() {
-		if ($this->NES->ROM->romCount > 1) {
+		if ($this->NES->rom->romCount > 1) {
 			$this->loadRomBank(0, 0x8000);
 			$this->loadRomBank(1, 0xC000);
 		} else {
@@ -282,8 +282,8 @@ class DirectAccess extends Mapper {
 	}
 
 	public function loadCHRROM() {
-		if ($this->NES->ROM->vromCount > 0) {
-			if ($this->NES->ROM->vromCount == 1) {
+		if ($this->NES->rom->vromCount > 0) {
+			if ($this->NES->rom->vromCount == 1) {
 				$this->loadVromBank(0, 0x0000);
 				$this->loadVromBank(0, 0x1000);
 			} else {
@@ -298,12 +298,12 @@ class DirectAccess extends Mapper {
 	}
 
 	public function loadRomBank($bank, $address) {
-		$bank %= $this->NES->ROM->romCount;
+		$bank %= $this->NES->rom->romCount;
 		// TODO: LOAD ARRAY
 	}
 
 	public function loadVromBank($bank, $address) {
-		if ($this->NES->ROM->vromCount === 0) {
+		if ($this->NES->rom->vromCount === 0) {
 			return;
 		}
 
@@ -313,33 +313,33 @@ class DirectAccess extends Mapper {
 	}
 
 	public function load32kRomBank($bank, $address) {
-		$this->loadRomBank(($bank * 2) % $this->NES->ROM->romCount, $address);
-		$this->loadRomBank(($bank * 2 + 1) % $this->NES->ROM->romCount, $address + 16384);
+		$this->loadRomBank(($bank * 2) % $this->NES->rom->romCount, $address);
+		$this->loadRomBank(($bank * 2 + 1) % $this->NES->rom->romCount, $address + 16384);
 	}
 
 	public function load8kVromBank($bank4kStart, $address) {
-		if ($this->NES->ROM->vromCount === 0) {
+		if ($this->NES->rom->vromCount === 0) {
 			return;
 		}
 
 		$this->NES->PPU->triggerRendering();
-		$this->loadVromBank(($bank4kStart) % $this->NES->ROM->vromCount, $address);
-		$this->loadVromBank(($bank4kStart + 1) % $this->NES->ROM->vromCount, $address + 4096);
+		$this->loadVromBank(($bank4kStart) % $this->NES->rom->vromCount, $address);
+		$this->loadVromBank(($bank4kStart + 1) % $this->NES->rom->vromCount, $address + 4096);
 	}
 
 	public function load1kVromBank($bank1k, $address) {
-		if ($this->NES->ROM->vromCount === 0) {
+		if ($this->NES->rom->vromCount === 0) {
 			return;
 		}
 
 		$this->NES->PPU->triggerRendering();
 
-		$bank4k = floor($bank1k / 4) % $this->NES->ROM->vromCount;
+		$bank4k = floor($bank1k / 4) % $this->NES->rom->vromCount;
 		$bankoffset = ($bank1k % 4) * 1024;
 
 		// TODO: COPY ARRAY
 
-		$vromTile = $this->NES->ROM->vromTile[$bank4k];
+		$vromTile = $this->NES->rom->vromTile[$bank4k];
 		$baseIndex = $address >> 4;
 
 		for ($i = 0; $i < 64; $i++) {
@@ -348,18 +348,18 @@ class DirectAccess extends Mapper {
 	}
 
 	public function load2kVromBank($bank2k, $address) {
-		if ($this->NES->ROM->vromCount === 0) {
+		if ($this->NES->rom->vromCount === 0) {
 			return;
 		}
 
 		$this->NES->PPU->triggerRendering();
 
-		$bank4k = floor($bank2k / 2) % $this->NES->ROM->vromCount;
+		$bank4k = floor($bank2k / 2) % $this->NES->rom->vromCount;
 		$bankoffset = ($bank2k % 2) * 2048;
 
 		// TODO: COPY ARRAY
 
-		$vromTile = $this->NES->ROM->vromTile[$bank4k];
+		$vromTile = $this->NES->rom->vromTile[$bank4k];
 		$baseIndex = $address >> 4;
 
 		for ($i = 0; $i < 128; $i++) {
@@ -368,7 +368,7 @@ class DirectAccess extends Mapper {
 	}
 
 	public function load8kRomBank($bank8k, $address) {
-		$bank16k = floor($bank8k / 2) % $this->NES->ROM->romCount;
+		$bank16k = floor($bank8k / 2) % $this->NES->rom->romCount;
 		$offset = ($bank8k % 2) * 8192;
 
 		// TODO: COPY ARRAY
