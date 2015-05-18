@@ -12,6 +12,7 @@ namespace PHPNES\MMAP\Mappers;
 
 use PHPNES\MMAP\Mapper;
 use PHPNES\CPU;
+use PHPNES\Helpers\ArrayHelpers;
 
 class DirectAccess extends Mapper {
 	public $joy1StrobeState = 0;
@@ -294,12 +295,17 @@ class DirectAccess extends Mapper {
 	}
 
 	public function loadBatteryRam() {
-		// TODO
+		if ($this->NES->rom->batteryRam) {
+			$ram = $this->NES->rom->batteryRam;
+			if ($ram !== null && count($ram) == 0x2000) {
+				ArrayHelpers::copyArrayElements($ram, 0, $this->NES->CPU->mem, 0x6000, 0x2000);
+			}
+		}
 	}
 
 	public function loadRomBank($bank, $address) {
 		$bank %= $this->NES->rom->romCount;
-		// TODO: LOAD ARRAY
+		ArrayHelpers::copyArrayElements($this->NES->rom->rom[$bank], 0, $this->NES->CPU->mem, 0x6000, 0x2000);
 	}
 
 	public function loadVromBank($bank, $address) {
@@ -308,8 +314,11 @@ class DirectAccess extends Mapper {
 		}
 
 		$this->NES->PPU->triggerRendering();
+		ArrayHelpers::copyArrayElements($this->NES->rom->vrom[$bank % $this->NES->rom->vromCount], 0,
+			$this->NES->PPU->vramMem, $address, 4096);
 
-		// TODO: LOAD ARRAY
+		$vromTile = $this->NES->rom->vromTile[$bank % $this->NES->rom->vromCount];
+		ArrayHelpers::copyArrayElements($vromTile, 0, $this->NES->PPU->ptTile, $address >> 4, 256);
 	}
 
 	public function load32kRomBank($bank, $address) {
@@ -337,7 +346,7 @@ class DirectAccess extends Mapper {
 		$bank4k = floor($bank1k / 4) % $this->NES->rom->vromCount;
 		$bankoffset = ($bank1k % 4) * 1024;
 
-		// TODO: COPY ARRAY
+		ArrayHelpers::copyArrayElements($this->NES->rom->vrom[$bank4k], 0, $this->NES->PPU->vramMem, $bankoffset, 1024);
 
 		$vromTile = $this->NES->rom->vromTile[$bank4k];
 		$baseIndex = $address >> 4;
@@ -357,7 +366,7 @@ class DirectAccess extends Mapper {
 		$bank4k = floor($bank2k / 2) % $this->NES->rom->vromCount;
 		$bankoffset = ($bank2k % 2) * 2048;
 
-		// TODO: COPY ARRAY
+		ArrayHelpers::copyArrayElements($this->NES->rom->vrom[$bank4k], $bankoffset, $this->NES->PPU->vramMem, $address, 2048);
 
 		$vromTile = $this->NES->rom->vromTile[$bank4k];
 		$baseIndex = $address >> 4;
@@ -371,7 +380,7 @@ class DirectAccess extends Mapper {
 		$bank16k = floor($bank8k / 2) % $this->NES->rom->romCount;
 		$offset = ($bank8k % 2) * 8192;
 
-		// TODO: COPY ARRAY
+		ArrayHelpers::copyArrayElements($this->NES->rom->rom[$bank16k], $offset, $this->NES->CPU->mem, $address, 8192);
 	}
 
 	public function clockIrqCounter() {
