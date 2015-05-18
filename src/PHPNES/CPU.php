@@ -231,6 +231,7 @@ class CPU {
 
 		$addr &= 0xFFFF;
 
+		print "OPCODE: ".($opinf & 0xFF).PHP_EOL;
 		switch ($opinf & 0xFF) {
 			case 0:
 				$temp = $this->REG_ACC + $this->load($addr) + $this->F_CARRY;

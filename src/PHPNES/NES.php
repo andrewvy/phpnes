@@ -46,7 +46,7 @@ class NES {
 	public function __construct() {
 		// We definitely need more than the default memory limit.
 
-		ini_set('memory_limit', '1G');
+		ini_set('memory_limit', '512M');
 
 		$this->CPU = new CPU($this);
 		$this->PPU = new PPU($this);
@@ -122,7 +122,6 @@ class NES {
 	}
 
 	public function frame() {
-		print "STARTING FRAME";
 		$this->PPU->startFrame();
 
 		$cycles = 0;

@@ -95,6 +95,8 @@ class ROM {
 	}
 
 	public function load($data) {
+		$dataLength = strlen($data);
+
 		if (strrpos($data, "NES\x1a") === false) {
 			// This is an invalid ROM.
 			return false;
@@ -127,7 +129,6 @@ class ROM {
 			$this->mapperType &= 0xF;
 		}
 
-
 		// Load PRG-ROM Banks
 
 		$this->rom = array_fill(0, $this->romCount, 0);
@@ -138,7 +139,7 @@ class ROM {
 			$this->rom[$i] = array_fill(0, 16384, 0x00);
 			for ($j = 0; $j < 16384; $j++) {
 				// if offset + j >= data length
-				if (isset($data[$offset+$j])) {
+				if ($offset + $j >= $dataLength) {
 					break;
 				}
 
@@ -155,7 +156,7 @@ class ROM {
 		for ($i = 0; $i < $this->vromCount; $i ++) {
 			$this->vrom[$i] = array_fill(0, 4096, 0x00);
 			for ($j = 0; $j < 4096; $j++) {
-				if (isset($data[$offset+$j])) {
+				if ($offset + $j >= $dataLength) {
 					break;
 				}
 
