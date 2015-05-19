@@ -17,23 +17,4 @@ class MMAP {
 		$this->NES = $NES;
 	}
 
-	public function reset() {
-
-	}
-
-	public function loadROM() {
-
-	}
-
-	public function load($addr) {
-	}
-
-	public function write($addr, $val) {
-	}
-
-	public function clockIrqCounter() {
-	}
-
-	public function latchAccess($address) {
-	}
 }
