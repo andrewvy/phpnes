@@ -308,7 +308,7 @@ class DirectAccess extends Mapper {
 
 	public function loadRomBank($bank, $address) {
 		$bank %= $this->NES->rom->romCount;
-		ArrayHelpers::copyArrayElements($this->NES->rom->rom[$bank], 0, $this->NES->CPU->mem, 0x6000, 0x2000);
+		ArrayHelpers::copyArrayElements($this->NES->rom->rom[$bank], 0, $this->NES->CPU->mem, $address, 16384);
 	}
 
 	public function loadVromBank($bank, $address) {
