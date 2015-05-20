@@ -299,7 +299,7 @@ class DirectAccess extends Mapper {
 
 	public function loadBatteryRam() {
 		if ($this->NES->rom->batteryRam) {
-			$ram = $this->NES->rom->batteryRam;
+			$ram = &$this->NES->rom->batteryRam;
 			if ($ram !== null && count($ram) == 0x2000) {
 				ArrayHelpers::copyArrayElements($ram, 0, $this->NES->CPU->mem, 0x6000, 0x2000);
 			}
