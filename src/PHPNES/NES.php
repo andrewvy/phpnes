@@ -181,16 +181,4 @@ class NES {
 			}
 		}
 	}
-
-	public function dumpRam() {
-		$memCount = count($this->CPU->mem);
-		for ($i = 0; $i < $memCount; $i+4) {
-			print $this->CPU->mem[$i];
-			print $this->CPU->mem[$i+1];
-			print $this->CPU->mem[$i+2];
-			print $this->CPU->mem[$i+3];
-			print $this->CPU->mem[$i+4];
-			print PHP_EOL;
-		}
-	}
 }
