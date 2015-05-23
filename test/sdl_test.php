@@ -13,7 +13,7 @@ if (!extension_loaded("sdl")) {
 function waitForInput() {
 	$event = null;
 	while (SDL_WaitEvent($event)) {
-		if (in_array( $event["type", array(SDL_MOUSEBUTTONDOWN, SDL_KEYDOWN))) {
+		if (in_array( $event["type"], array(SDL_MOUSEBUTTONDOWN, SDL_KEYDOWN))) {
 			break;
 		}
 	}
