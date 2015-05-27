@@ -1,8 +1,6 @@
-# Development ceased
+# Development ~~ceased~~ resumed!
 
-Due to a unfortunate switch from arch linux to OSX, I'm unable to install sdl devel lib/headers and compile PHPSDL for Yosemite. ):
-
-Development is ceased unless I make the switch back to Arch Linux on a more supported laptop.
+With some careful configuration, looks like I'm up and running with [PHP-SDL](https://github.com/phpsdl/extension) on OSX 10.10 Yosemite!
 
 # PHPNES
 
@@ -16,6 +14,8 @@ Make sure you have PECL and Composer. Install `sdl-beta`.
 
 	pecl install sdl-beta
 
+Or if you're more daring, compile PHP-SDL from source!
+
 ### Current Status
 
 Not fully functional! Currently porting over JSNES.
@@ -23,3 +23,4 @@ Not fully functional! Currently porting over JSNES.
 ### Libraries
 
 [ReactPHP](https://github.com/reactphp/react)
+[PHP-SDL](https://github.com/phpsdl/extension)
