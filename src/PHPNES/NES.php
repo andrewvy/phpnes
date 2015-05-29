@@ -37,6 +37,7 @@ class NES {
 	public $PAPU;
 	public $MMAP;
 	public $MapperProvider;
+	public $SDLWrapper;
 
 	public $isRunning = false;
 	public $rom;
@@ -55,6 +56,7 @@ class NES {
 		$this->loop = Factory::create();
 
 		$this->MapperProvider = new MapperProvider($this);
+		$this->SDLWrapper = new SDLWrapper($this);
 	}
 
 	public function reset() {
@@ -68,6 +70,7 @@ class NES {
 	}
 
 	public function start() {
+
 		if ($this->rom != null && $this->rom->isValid) {
 			// Start running rom!
 			$this->isRunning = true;

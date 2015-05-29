@@ -28,3 +28,4 @@ Check roms/croom/croom.b64.license for details.
 $romData = file_get_contents("roms/croom/croom.nes");
 
 $nes->loadRom($romData);
+$nes->start();
