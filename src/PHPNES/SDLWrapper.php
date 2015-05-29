@@ -20,6 +20,7 @@ class SDLWrapper {
 
 	public function __construct(&$NES) {
 		$this->NES = $NES;
+		$this->init();
 	}
 
 	public function init() {

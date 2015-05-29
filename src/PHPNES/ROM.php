@@ -131,7 +131,7 @@ class ROM {
 
 		// Load PRG-ROM Banks
 
-		$this->rom = array_fill(0, $this->romCount, 0);
+		$this->rom = array_fill(0, $this->romCount, []);
 
 		$offset = 16;
 
@@ -151,7 +151,7 @@ class ROM {
 
 		// Load CHR-ROM Banks
 
-		$this->vrom = array_fill(0, $this->vromCount, 0);
+		$this->vrom = array_fill(0, $this->vromCount, []);
 
 		for ($i = 0; $i < $this->vromCount; $i ++) {
 			$this->vrom[$i] = array_fill(0, 4096, 0x00);
@@ -168,7 +168,7 @@ class ROM {
 
 		// Create VROM Tiles
 
-		$this->vromTile = array_fill(0, $this->vromCount, 0);
+		$this->vromTile = array_fill(0, $this->vromCount, []);
 
 		for ($i = 0; $i < $this->vromCount; $i++) {
 			$this->vromTile[$i] = array_fill(0, 256, 0x00);
