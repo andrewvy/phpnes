@@ -1,6 +1,16 @@
 <?php
 
-error_reporting( E_ALL | E_STRICT );
+/**
+ * This file is part of PHPNES - a NES Emulator implemented in PHP
+ * Based off of Ben Firshman's JSNES and Jamie Sanders' vNES.
+ *
+ * @copyright Andrew Vy 2015
+ * @license GPL
+ */
+
+require "vendor/autoload.php";
+
+error_reporting(E_ALL | E_STRICT);
 ini_set("display_errors", true);
 
 if (!extension_loaded("sdl")) {
