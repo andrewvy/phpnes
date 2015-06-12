@@ -112,6 +112,14 @@ class CPU {
 		$temp = 0;
 		$add = 0;
 
+		print "REG ACC: ".$this->REG_ACC
+			." REG_X: ".$this->REG_X
+			." REG_Y: ".$this->REG_Y
+			." REG_STATUS: ".$this->REG_STATUS
+			." SP: ".$this->SP
+			." PC: ".$this->PC
+			.PHP_EOL;
+
 		if ($this->irqRequested) {
 			$temp =
 				($this->F_CARRY) |
@@ -231,7 +239,6 @@ class CPU {
 
 		$addr &= 0xFFFF;
 
-		print "OPCODE: ".($opinf & 0xFF).PHP_EOL;
 		switch ($opinf & 0xFF) {
 			case 0:
 				$temp = $this->REG_ACC + $this->load($addr) + $this->F_CARRY;

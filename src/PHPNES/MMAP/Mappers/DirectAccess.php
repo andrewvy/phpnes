@@ -57,10 +57,7 @@ class DirectAccess extends Mapper {
 	public function load($address) {
 		$address &= 0xFFFF;
 
-		print "LOADING FROM ADDR: ".$address.PHP_EOL;
-
 		if ($address > 0x4017) {
-			print "LOADING FROM CPU MEM\n";
 			return $this->NES->CPU->mem[$address];
 		} else if ($address >= 0x2000) {
 			return $this->regLoad($address);
@@ -382,7 +379,6 @@ class DirectAccess extends Mapper {
 	public function load8kRomBank($bank8k, $address) {
 		$bank16k = floor($bank8k / 2) % $this->NES->rom->romCount;
 		$offset = ($bank8k % 2) * 8192;
-
 		ArrayHelpers::copyArrayElements($this->NES->rom->rom[$bank16k], $offset, $this->NES->CPU->mem, $address, 8192);
 	}
 

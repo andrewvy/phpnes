@@ -143,7 +143,7 @@ class ROM {
 					break;
 				}
 
-				$this->rom[$i][$j] = $data[$offset+$j] & 0xFF;
+				$this->rom[$i][$j] = ord($data[$offset+$j]) & 0xFF;
 			}
 
 			$offset += 16384;
@@ -160,7 +160,7 @@ class ROM {
 					break;
 				}
 
-				$this->vrom[$i][$j] = $data[$offset+$j] & 0xFF;
+				$this->vrom[$i][$j] = ord($data[$offset+$j]) & 0xFF;
 			}
 
 			$offset += 4096;
