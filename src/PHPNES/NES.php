@@ -89,13 +89,13 @@ class NES {
 		}
 	}
 
-	public function stop() {
+	public function stop($hasCrashed=false) {
 		$this->isRunning = false;
 
-		if ($this->debugMode) {
+		if ($this->debugMode && $hasCrashed) {
 			(Int) $memAddr = readline("Inspect Memory At: ");
 			print "Value: ".$this->CPU->mem[$memAddr].PHP_EOL;
-		} else {
+		} else if ($hasCrashed) {
 			throw new \Exception("Unhandled close, NES shutting down!");
 		}
 	}

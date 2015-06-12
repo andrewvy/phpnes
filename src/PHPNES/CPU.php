@@ -630,7 +630,7 @@ class CPU {
 			default:
 				print "Game crashed, invalid opcode at ".$opaddr.": ".$opinf.PHP_EOL;
 
-				$this->NES->stop();
+				$this->NES->stop(true);
 				break;
 		}
 
