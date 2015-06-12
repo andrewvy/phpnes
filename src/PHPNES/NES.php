@@ -91,6 +91,13 @@ class NES {
 
 	public function stop() {
 		$this->isRunning = false;
+
+		if ($this->debugMode) {
+			(Int) $memAddr = readline("Inspect Memory At: ");
+			print "Value: ".$this->CPU->mem[$memAddr].PHP_EOL;
+		} else {
+			throw new \Exception("Unhandled close, NES shutting down!");
+		}
 	}
 
 	public function loadRom($data) {
@@ -133,6 +140,7 @@ class NES {
 		$cycles = 0;
 		$emulateSound = $this->emulateSound;
 		for (;;) {
+
 			if ($this->CPU->cyclesToHalt === 0) {
 				$cycles = $this->CPU->emulate();
 

@@ -72,15 +72,15 @@ class CPU {
 		$this->REG_Y = 0x00;
 
 		// Reset stack pointer and program counter
-		$this->SP = 0x01FF;
+		$this->SP = 0xFD;
 		$this->PC = 0x8000-1;
 		$this->PC_NEW = 0x8000-1;
 
 		// Reset status register
-		$this->REG_STATUS = 0x28;
+		$this->REG_STATUS = 0x34;
 
 		// Set status
-		$this->setStatus(0x28);
+		$this->setStatus(0x34);
 
 		// Set flags
 		$this->F_CARRY = 0x00;
@@ -111,14 +111,6 @@ class CPU {
 	public function emulate() {
 		$temp = 0;
 		$add = 0;
-
-		print "REG ACC: ".$this->REG_ACC
-			." REG_X: ".$this->REG_X
-			." REG_Y: ".$this->REG_Y
-			." REG_STATUS: ".$this->REG_STATUS
-			." SP: ".$this->SP
-			." PC: ".$this->PC
-			.PHP_EOL;
 
 		if ($this->irqRequested) {
 			$temp =
@@ -238,6 +230,18 @@ class CPU {
 		}
 
 		$addr &= 0xFFFF;
+
+
+		print "REG ACC: ".$this->REG_ACC
+			." | REG_X: ".$this->REG_X
+			." | REG_Y: ".$this->REG_Y
+			." | REG_STATUS: ".$this->REG_STATUS
+			." | SP: ".$this->SP
+			." | OPCODE: ".($opinf & 0xFF)
+			." | ADDR: ".(($this->opdata[$this->NES->MMAP->load($this->PC + 1)] << 4) & 0xFF)
+			." | PC: ".$this->PC
+			.PHP_EOL;
+
 
 		switch ($opinf & 0xFF) {
 			case 0:
@@ -624,8 +628,9 @@ class CPU {
 				$this->F_ZERO = $this->REG_Y;
 				break;
 			default:
+				print "Game crashed, invalid opcode at ".$opaddr.": ".$opinf.PHP_EOL;
+
 				$this->NES->stop();
-				throw new \Exception("Game crashed, invalid opcode at ".$opaddr.": ".$opinf);
 				break;
 		}
 
