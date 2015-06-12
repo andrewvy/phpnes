@@ -44,7 +44,7 @@ class NES {
 	public $romData;
 	public $debugMode = false;
 
-	public function __construct() {
+	public function __construct($sdlEnabled=false) {
 		// We definitely need more than the default memory limit.
 
 		ini_set('memory_limit', '512M');
@@ -56,7 +56,10 @@ class NES {
 		$this->loop = Factory::create();
 
 		$this->MapperProvider = new MapperProvider($this);
-		$this->SDLWrapper = new SDLWrapper($this);
+
+		if ($sdlEnabled) {
+			$this->SDLWrapper = new SDLWrapper($this);
+		}
 	}
 
 	public function reset() {
