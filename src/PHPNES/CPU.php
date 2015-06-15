@@ -18,7 +18,8 @@ class CPU {
 	const IRQ_RESET = 2;
 
 	public $NES;
-	public $OpData;
+	public $opdata;
+	public $instname;
 
 	public $mem = [];
 	public $REG_ACC;
@@ -98,6 +99,7 @@ class CPU {
 
 		$opdata = new OpData();
 		$this->opdata = $opdata->opdata;
+		$this->instname = $opdata->instname;
 		$this->cyclesToHalt = 0;
 
 		// Reset crash bool
@@ -149,12 +151,14 @@ class CPU {
 		}
 
 		$opinf = $this->opdata[$this->NES->MMAP->load($this->PC + 1)];
+
 		$cycleCount = ($opinf >> 24);
 		$cycleAdd = 0;
 
 		$addrMode = ($opinf >> 8) & 0xFF;
 		$opaddr = $this->PC;
 		$this->PC += (($opinf >> 16) & 0xFF);
+
 		$addr = 0;
 
 		switch ($addrMode) {
@@ -231,17 +235,32 @@ class CPU {
 
 		$addr &= 0xFFFF;
 
-
+/*
 		print "REG ACC: ".$this->REG_ACC
 			." | REG_X: ".$this->REG_X
 			." | REG_Y: ".$this->REG_Y
 			." | REG_STATUS: ".$this->REG_STATUS
+			." | MODE: ".$addrMode
 			." | SP: ".$this->SP
 			." | OPCODE: ".($opinf & 0xFF)
-			." | ADDR: ".(($this->opdata[$this->NES->MMAP->load($this->PC + 1)] << 4) & 0xFF)
+			." | ADDR: ".$addr
 			." | PC: ".$this->PC
 			.PHP_EOL;
+*/
 
+		if (array_key_exists(($opinf & 0xFF), $this->instname) && $this->NES->debugMode === true) {
+			print $this->instname[$opinf & 0xFF].": "
+				.$addr
+				." | REG_X: ".$this->REG_X
+				." | REG_Y: ".$this->REG_Y
+				." | REG_STATUS: ".$this->REG_STATUS
+				." | MODE: ".$addrMode
+				." | ADDR: ".$addr
+				." | SP: ".$this->SP
+				." | PC: ".$this->PC
+				." | OPCODE: ".(($opinf) & 0xFF)
+				.PHP_EOL;
+		}
 
 		switch ($opinf & 0xFF) {
 			case 0:

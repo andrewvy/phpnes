@@ -1,0 +1,3 @@
+For some reason, the opcodes in OpData aren't being set/retrieved correctly.
+
+Getting the instruction code INS_LSR results in 0xFF / 255 noop
