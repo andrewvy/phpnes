@@ -202,7 +202,7 @@ class OpData {
 		$this->setOp($this::INS_JMP, 0x4C, $this::ADDR_ABS, 3, 5);
 		$this->setOp($this::INS_JMP, 0x6C, $this::ADDR_INDABS, 3, 5);
 
-		$this->setOp($this::INS_JSR, 0x21, $this::ADDR_ABS, 3, 6);
+		$this->setOp($this::INS_JSR, 0x20, $this::ADDR_ABS, 3, 6);
 
 		$this->setOp($this::INS_LDA, 0xA9, $this::ADDR_IMM, 2, 3);
 		$this->setOp($this::INS_LDA, 0xA5, $this::ADDR_ZP, 2, 3);

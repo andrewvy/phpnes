@@ -647,7 +647,7 @@ class CPU {
 				$this->F_ZERO = $this->REG_Y;
 				break;
 			default:
-				print "Game crashed, invalid opcode at ".$opaddr.": ".$opinf.PHP_EOL;
+				print "Game crashed, invalid opcode at ".($opaddr + 1).": ".$opinf.PHP_EOL;
 
 				$this->NES->stop(true);
 				break;

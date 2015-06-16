@@ -95,6 +95,7 @@ class NES {
 		if ($this->debugMode && $hasCrashed) {
 			(Int) $memAddr = readline("Inspect Memory At: ");
 			print "Value: ".$this->CPU->mem[$memAddr].PHP_EOL;
+			print "Opcode: ".($this->CPU->opdata[$this->CPU->mem[$memAddr]] & 0xFF).PHP_EOL;
 		} else if ($hasCrashed) {
 			throw new \Exception("Unhandled close, NES shutting down!");
 		}
