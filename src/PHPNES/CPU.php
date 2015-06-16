@@ -73,15 +73,15 @@ class CPU {
 		$this->REG_Y = 0x00;
 
 		// Reset stack pointer and program counter
-		$this->SP = 0xFD;
+		$this->SP = 0x01FF;
 		$this->PC = 0x8000-1;
 		$this->PC_NEW = 0x8000-1;
 
 		// Reset status register
-		$this->REG_STATUS = 0x34;
+		$this->REG_STATUS = 0x28;
 
 		// Set status
-		$this->setStatus(0x34);
+		$this->setStatus(0x28);
 
 		// Set flags
 		$this->F_CARRY = 0x00;
@@ -257,7 +257,7 @@ class CPU {
 				." | MODE: ".$addrMode
 				." | ADDR: ".$addr
 				." | SP: ".$this->SP
-				." | PC: ".$this->PC
+				." | PC: ".($this->PC + 1)
 				." | OPCODE: ".(($opinf) & 0xFF)
 				.PHP_EOL;
 		}
