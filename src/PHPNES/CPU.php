@@ -90,12 +90,12 @@ class CPU {
 		$this->F_INTERRUPT_NEW = 1;
 		$this->F_OVERFLOW = 0x00;
 		$this->F_SIGN = 0x00;
-		$this->F_ZERO = 1;
+		$this->F_ZERO = 0;
 
-		$this->F_NOTUSED = 1;
-		$this->F_NOTUSED_NEW = 1;
-		$this->F_BRK = 1;
-		$this->F_BRK_NEW = 1;
+		$this->F_NOTUSED = 0;
+		$this->F_NOTUSED_NEW = 0;
+		$this->F_BRK = 0;
+		$this->F_BRK_NEW = 0;
 
 		$opdata = new OpData();
 		$this->opdata = $opdata->opdata;
@@ -235,19 +235,6 @@ class CPU {
 
 		$addr &= 0xFFFF;
 
-/*
-		print "REG ACC: ".$this->REG_ACC
-			." | REG_X: ".$this->REG_X
-			." | REG_Y: ".$this->REG_Y
-			." | REG_STATUS: ".$this->REG_STATUS
-			." | MODE: ".$addrMode
-			." | SP: ".$this->SP
-			." | OPCODE: ".($opinf & 0xFF)
-			." | ADDR: ".$addr
-			." | PC: ".$this->PC
-			.PHP_EOL;
-*/
-
 		if (array_key_exists(($opinf & 0xFF), $this->instname) && $this->NES->debugMode === true) {
 			print $this->instname[$opinf & 0xFF].": "
 				.$addr
@@ -259,6 +246,16 @@ class CPU {
 				." | SP: ".$this->SP
 				." | PC: ".($this->PC + 1)
 				." | OPCODE: ".(($opinf) & 0xFF)
+				.PHP_EOL;
+
+			print "FLAGS:"
+				." | CARRY: ".$this->F_CARRY
+				." | ZERO: ".$this->F_ZERO
+				." | IRQ: ".$this->F_INTERRUPT
+				." | DECIMAL: ".$this->F_DECIMAL
+				." | BRK: ".$this->F_BRK
+				." | OVERFLOW: ".$this->F_OVERFLOW
+				." | NEG: ".$this->F_SIGN
 				.PHP_EOL;
 		}
 
@@ -459,7 +456,13 @@ class CPU {
 			case 30:
 				$this->REG_X = $this->load($addr);
 				$this->F_SIGN = ($this->REG_X >> 7) & 1;
-				$this->F_ZERO = $this->REG_X;
+
+				if ($this->REG_X === 0) {
+					$this->F_ZERO = 1;
+				} else {
+					$this->F_ZERO = 0;
+				}
+
 				$cycleCount += $cycleAdd;
 				break;
 			case 31:
