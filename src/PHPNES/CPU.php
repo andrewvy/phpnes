@@ -54,16 +54,15 @@ class CPU {
 	public function reset() {
 		$this->mem = array_fill(0, 0x10000, 0xFF);
 
-		for ($p = 0; $p < 4; $p++) {
-			$i = $p * 0x800;
+		$this->mem[0x008] = 0xF7;
+		$this->mem[0x009] = 0xEF;
+		$this->mem[0x00A] = 0xDF;
+		$this->mem[0x00F] = 0xBF;
 
-			$this->mem[$i + 0x008] = 0xF7;
-			$this->mem[$i + 0x009] = 0xEF;
-			$this->mem[$i + 0x00A] = 0xDF;
-			$this->mem[$i + 0x00F] = 0xBF;
-		}
+		$this->mem[0x4017] = 0x00;
+		$this->mem[0x4015] = 0x00;
 
-		for ($i = 0x2001; $i < 0x10000; $i++) {
+		for ($i = 0x4000; $i < 0x400F; $i++) {
 			$this->mem[$i] = 0x00;
 		}
 
@@ -73,15 +72,15 @@ class CPU {
 		$this->REG_Y = 0x00;
 
 		// Reset stack pointer and program counter
-		$this->SP = 0x01FF;
-		$this->PC = 0x8000-1;
-		$this->PC_NEW = 0x8000-1;
+		$this->SP = 0xFD-3;
+		$this->PC = 0xC000;
+		$this->PC_NEW = 0xC000;
 
 		// Reset status register
-		$this->REG_STATUS = 0x28;
+		$this->REG_STATUS = 0x00;
 
 		// Set status
-		$this->setStatus(0x28);
+		$this->setStatus(0x00);
 
 		// Set flags
 		$this->F_CARRY = 0x00;
@@ -113,6 +112,8 @@ class CPU {
 	public function emulate() {
 		$temp = 0;
 		$add = 0;
+
+		echo "STARTING PC: ".dechex($this->PC).PHP_EOL;
 
 		if ($this->irqRequested) {
 			$temp =
@@ -247,7 +248,7 @@ class CPU {
 				." | PC: ".($this->PC + 1)
 				." | OPCODE: ".(($opinf) & 0xFF)
 				.PHP_EOL;
-
+/*
 			print "FLAGS:"
 				." | CARRY: ".$this->F_CARRY
 				." | ZERO: ".$this->F_ZERO
@@ -257,6 +258,7 @@ class CPU {
 				." | OVERFLOW: ".$this->F_OVERFLOW
 				." | NEG: ".$this->F_SIGN
 				.PHP_EOL;
+*/
 		}
 
 		switch ($opinf & 0xFF) {

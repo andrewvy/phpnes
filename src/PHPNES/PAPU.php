@@ -22,4 +22,7 @@ class PAPU {
 
 	public function writeReg($address, $value) {
 	}
+
+	public function clockFrameCount($cycles) {
+	}
 }

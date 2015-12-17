@@ -12,7 +12,7 @@ require "vendor/autoload.php";
 
 use PHPNES\NES;
 
-$nes = new NES();
+$nes = new NES(true);
 $nes->debugMode = true;
 
 /*
@@ -25,7 +25,7 @@ Copyright © 2010 Damian Yerrick <croom@pineight.com>
 Check roms/croom/croom.b64.license for details.
 */
 
-$romData = file_get_contents("roms/croom/croom.nes");
+$romData = file_get_contents("roms/nestest.nes");
 
 $nes->loadRom($romData);
 $nes->start();
